@@ -1,0 +1,277 @@
+# Generated with protoc-gen-openapi
+# https://github.com/kollalabs/protoc-gen-openapi
+
+openapi: 3.0.3
+info:
+    title: Api API
+    version: 0.0.1
+paths:
+    /v1:
+        get:
+            tags:
+                - Api
+            summary: GetServiceInfo
+            operationId: Api_GetServiceInfo
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DaemonInfo'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /v1/artifacts:
+        get:
+            tags:
+                - Api
+            summary: ListArtifacts
+            operationId: Api_ListArtifacts
+            parameters:
+                - name: taskRunId
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListArtifactsResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        post:
+            tags:
+                - Api
+            summary: CreateArtifact
+            operationId: Api_CreateArtifact
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreateArtifactRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Artifact'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /v1/artifacts/{artifactHash}:
+        get:
+            tags:
+                - Api
+            summary: DownloadArtifact
+            operationId: Api_DownloadArtifact
+            parameters:
+                - name: artifactHash
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ArtifactPayload'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /v1/task_runs:
+        post:
+            tags:
+                - Api
+            summary: CreateTaskRun
+            operationId: Api_CreateTaskRun
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreateTaskRunRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TaskRun'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /v1/tasks_runs/{taskRunId}:
+        get:
+            tags:
+                - Api
+            summary: GetTaskRun
+            operationId: Api_GetTaskRun
+            parameters:
+                - name: taskRunId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TaskRun'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /v1/workers:
+        post:
+            tags:
+                - Api
+            summary: CreateWorkerEntry
+            operationId: Api_CreateWorkerEntry
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreateWorkerEntryRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/WorkerEntry'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+components:
+    schemas:
+        Artifact:
+            type: object
+            properties:
+                hash:
+                    type: string
+        ArtifactPayload:
+            type: object
+            properties:
+                payload:
+                    type: string
+                    format: byte
+        CreateArtifactRequest:
+            type: object
+            properties:
+                taskRunId:
+                    type: string
+                payload:
+                    type: string
+                    format: byte
+        CreateTaskRunRequest:
+            type: object
+            properties:
+                taskHash:
+                    type: string
+                artifactHash:
+                    type: string
+        CreateWorkerEntryRequest:
+            type: object
+            properties:
+                workerHash:
+                    type: string
+                provider:
+                    type: string
+                inputFormat:
+                    type: string
+        DaemonInfo:
+            type: object
+            properties:
+                name:
+                    type: string
+                version:
+                    type: string
+                provider:
+                    type: string
+        GoogleProtobufAny:
+            type: object
+            properties:
+                '@type':
+                    type: string
+                    description: The type of the serialized message.
+            additionalProperties: true
+            description: Contains an arbitrary serialized message along with a @type that describes the type of the serialized message.
+        ListArtifactsResponse:
+            type: object
+            properties:
+                artifacts:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Artifact'
+        Status:
+            type: object
+            properties:
+                code:
+                    type: integer
+                    description: The status code, which should be an enum value of [google.rpc.Code][google.rpc.Code].
+                    format: int32
+                message:
+                    type: string
+                    description: A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client.
+                details:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/GoogleProtobufAny'
+                    description: A list of messages that carry the error details.  There is a common set of message types for APIs to use.
+            description: 'The `Status` type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs. It is used by [gRPC](https://github.com/grpc). Each `Status` message contains three pieces of data: error code, error message, and error details. You can find out more about this error model and how to work with it in the [API Design Guide](https://cloud.google.com/apis/design/errors).'
+        TaskRun:
+            type: object
+            properties:
+                id:
+                    type: string
+                status:
+                    enum:
+                        - UNKNOWN
+                        - PENDING
+                        - RUNNING
+                        - DONE
+                        - ERROR
+                    type: string
+                    format: enum
+        WorkerEntry:
+            type: object
+            properties:
+                hash:
+                    type: string
+                provider:
+                    type: string
+                inputFormat:
+                    type: string
+tags:
+    - name: Api

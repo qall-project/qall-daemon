@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qall-daemon-client"
+version = "0.1.1"
+description = "Qall daemon client package"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+]
+
+dependencies = [
+    "dataclasses",
+    "googleapis-common-protos>=1.75.0",
+    "grpcio>=1.81.1",
+    "protobuf>=7.35.1",
+]
+
+[tool.setuptools_scm]
+
+[project.urls]
+Repository = "https://github.com/qall/qall-daemon-client"

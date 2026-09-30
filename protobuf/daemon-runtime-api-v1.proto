@@ -1,0 +1,121 @@
+syntax = "proto3";
+
+package daemon_runtime_api_v1;
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+
+option go_package = "internal/server/protobuf/daemon_runtime_api_v1";
+
+service Api {
+
+  rpc GetServiceInfo(google.protobuf.Empty) returns (DaemonInfo) {
+    option (google.api.http) = {get: "/v1"};
+  }
+
+  rpc CreateWorkerEntry(CreateWorkerEntryRequest) returns (WorkerEntry) {
+    option (google.api.http) = {
+      post: "/v1/workers"
+      body: "*"
+    };
+  }
+
+  rpc CreateTaskRun(CreateTaskRunRequest) returns (TaskRun) {
+    option (google.api.http) = {
+      post: "/v1/task_runs"
+      body: "*"
+    };
+  }
+
+  rpc GetTaskRun(GetTaskRunRequest) returns (TaskRun) {
+    option (google.api.http) = {
+      get: "/v1/tasks_runs/{task_run_id}"
+    };
+  }
+
+  rpc CreateArtifact(CreateArtifactRequest) returns (Artifact) {
+    option (google.api.http) = {
+      post: "/v1/artifacts"
+      body: "*"
+    };
+  }
+
+  rpc DownloadArtifact(DownloadArtifactRequest) returns (ArtifactPayload) {
+    option (google.api.http) = {
+      get: "/v1/artifacts/{artifact_hash}"
+    };
+  }
+
+  rpc ListArtifacts(ListArtifactsRequest) returns (ListArtifactsResponse) {
+    option (google.api.http) = {
+      get: "/v1/artifacts"
+    };
+  }
+}
+
+message DaemonInfo {
+  string name = 1;
+  string version = 2;
+  string provider = 3;
+}
+
+message CreateWorkerEntryRequest {
+  string worker_hash = 1;
+  string provider = 2;
+  string input_format = 3;
+}
+
+message CreateTaskRunRequest {
+  string task_hash = 1;
+  string artifact_hash = 2;
+}
+
+message TaskRun {
+  string id = 1;
+
+  enum Status {
+    UNKNOWN = 0;
+    PENDING = 1;
+    RUNNING = 2;
+    DONE = 3;
+    ERROR = 4;
+  }
+
+  Status status = 2;
+}
+
+message GetTaskRunRequest {
+  string task_run_id = 1;
+}
+
+message CreateArtifactRequest {
+  string  task_run_id = 1;
+  bytes   payload = 2;
+}
+
+message ListArtifactsRequest {
+  string task_run_id = 1;
+}
+
+message DownloadArtifactRequest {
+  string artifact_hash = 1;
+}
+
+message Artifact {
+  string hash = 1;
+//  string uri = 2;
+}
+
+message ArtifactPayload {
+  bytes payload = 1;
+}
+
+message ListArtifactsResponse {
+  repeated Artifact artifacts = 1;
+}
+
+message WorkerEntry {
+  string hash = 1;
+  string provider = 2;
+  string input_format = 3;
+}
