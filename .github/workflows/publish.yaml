@@ -38,12 +38,11 @@ jobs:
         echo "Version : $version"
 
     - name: Build package
-      run: python -m build
+      run: python -m build --outdir ../dist
 
     - name: Publish package
       uses: pypa/gh-action-pypi-publish@v1.5.0
       with:
-        packages-dir: client/dist
         user: __token__
         password: ${{ secrets.PYPI_API_TOKEN }}
 
