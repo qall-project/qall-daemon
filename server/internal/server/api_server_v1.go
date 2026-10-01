@@ -7,9 +7,9 @@ import (
 
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	"github.com/qall-project/qall-daemon/server/core"
-	"github.com/qall-project/qall-daemon/server/object"
-	pbDaemon "github.com/qall-project/qall-daemon/server/server/protobuf/daemon_runtime_api_v1"
+	"github.com/qall-project/qall-daemon/server/internal/core"
+	"github.com/qall-project/qall-daemon/server/internal/object"
+	pbDaemon "github.com/qall-project/qall-daemon/server/internal/server/protobuf/daemon_runtime_api_v1"
 )
 
 type ApiV1Server struct {

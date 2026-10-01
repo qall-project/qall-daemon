@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"testing"
 
-	dsObj "github.com/qall-project/qall-daemon/server/datastore/object"
-	"github.com/qall-project/qall-daemon/server/object"
+	dsObj "github.com/qall-project/qall-daemon/server/internal/datastore/object"
+	"github.com/qall-project/qall-daemon/server/internal/object"
 )
 
 type mockBlockStore struct {

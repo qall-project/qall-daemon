@@ -12,8 +12,8 @@ import (
 	"github.com/ipld/go-ipld-prime/codec/dagcbor"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 
-	"github.com/qall-project/qall-daemon/server/object"
-	"github.com/qall-project/qall-daemon/server/registry"
+	"github.com/qall-project/qall-daemon/server/internal/object"
+	"github.com/qall-project/qall-daemon/server/internal/registry"
 )
 
 func getTaskPayload(ctx context.Context, hash string, reg registry.RegistryProvider) (*object.TaskPayload, error) {

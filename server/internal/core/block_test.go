@@ -12,7 +12,7 @@ import (
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"github.com/multiformats/go-multihash"
 
-	"github.com/qall-project/qall-daemon/server/registry"
+	"github.com/qall-project/qall-daemon/server/internal/registry"
 )
 
 type mockRegistry struct {

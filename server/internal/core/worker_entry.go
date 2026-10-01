@@ -3,7 +3,7 @@ package core
 import (
 	"context"
 
-	"github.com/qall-project/qall-daemon/server/object"
+	"github.com/qall-project/qall-daemon/server/internal/object"
 )
 
 func (e *DaemonCore) CreateWorkerEntry(ctx context.Context,

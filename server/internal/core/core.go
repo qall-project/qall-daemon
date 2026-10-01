@@ -5,11 +5,11 @@ import (
 	"log"
 	"sync"
 
-	"github.com/qall-project/qall-daemon/server/datastore"
-	"github.com/qall-project/qall-daemon/server/object"
-	"github.com/qall-project/qall-daemon/server/registry"
-	"github.com/qall-project/qall-daemon/server/runtime"
-	"github.com/qall-project/qall-daemon/server/watchdog"
+	"github.com/qall-project/qall-daemon/server/internal/datastore"
+	"github.com/qall-project/qall-daemon/server/internal/object"
+	"github.com/qall-project/qall-daemon/server/internal/registry"
+	"github.com/qall-project/qall-daemon/server/internal/runtime"
+	"github.com/qall-project/qall-daemon/server/internal/watchdog"
 
 	"github.com/qall-project/qall-registry/server/pkg/blockstores"
 )

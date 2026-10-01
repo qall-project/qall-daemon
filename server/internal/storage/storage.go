@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"github.com/qall-project/qall-daemon/server/datastore"
-	"github.com/qall-project/qall-daemon/server/registry"
+	"github.com/qall-project/qall-daemon/server/internal/datastore"
+	"github.com/qall-project/qall-daemon/server/internal/registry"
 
 	"github.com/qall-project/qall-registry/server/pkg/blockstores"
 )
