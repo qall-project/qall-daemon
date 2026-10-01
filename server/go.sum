@@ -282,6 +282,8 @@ github.com/polydawn/refmt v0.89.1-0.20231129105047-37766d95467a h1:cgqrm0F3zwf9I
 github.com/polydawn/refmt v0.89.1-0.20231129105047-37766d95467a/go.mod h1:ocZfO/tLSHqfScRDNTJbAJR1by4D1lewauX9OwTaPuY=
 github.com/posener/complete v1.1.1/go.mod h1:em0nMJCgc9GFtwrmVmEMR/ZL6WyhyjMBndrE9hABlRI=
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
+github.com/qall-project/qall-registry/server v0.0.0-20261001132014-93bb5e60e682 h1:4Melpnn6T3cWthnCJzA0I/cZNwoRg9nbPhyunKZJBnc=
+github.com/qall-project/qall-registry/server v0.0.0-20261001132014-93bb5e60e682/go.mod h1:blcSJztxqswIepAycn0rQo59+1G+55CWyYZf9Mte/Ek=
 github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec h1:W09IVJc94icq4NjY3clb7Lk8O1qJ8BdBEF8z0ibU0rE=
 github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec/go.mod h1:qqbHyh8v60DhA7CoWK5oRCqLrMHRGoxYCSS9EjAz6Eo=
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=

@@ -11,11 +11,11 @@ require (
 	github.com/moby/moby/api v1.55.0
 	github.com/moby/moby/client v0.5.0
 	github.com/multiformats/go-multihash v0.2.3
+	github.com/qall-project/qall-registry/server v0.0.0-20261001132014-93bb5e60e682
 	google.golang.org/genproto/googleapis/api v0.0.0-20260615183401-62b3387ff324
 	google.golang.org/grpc v1.81.1
 	google.golang.org/protobuf v1.36.11
 	modernc.org/sqlite v1.53.0
-	github.com/qall-project/qall-registry/server v0.0.0-00010101000000-000000000000
 )
 
 require (
@@ -61,5 +61,3 @@ require (
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 )
-
-replace github.com/qall-project/qall-registry/server => ../github.com/qall-project/qall-registry/server

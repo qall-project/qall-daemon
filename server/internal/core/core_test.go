@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"testing"
 
-	dsObj "github.com/qall-project/qall-daemon/server/internal/datastore/object"
+	dsObj "github.com/qall-project/qall-daemon/server/internal/datastore"
 	"github.com/qall-project/qall-daemon/server/internal/object"
 )
 
