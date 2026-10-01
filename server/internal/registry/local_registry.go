@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"qall-registry-server/pkg/core"
+	"github.com/qall-project/qall-registry/pkg/core"
 )
 
 type LocalRegistry struct {

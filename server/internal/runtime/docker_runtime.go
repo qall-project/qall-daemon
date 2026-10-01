@@ -21,7 +21,7 @@ import (
 	"github.com/moby/moby/api/types/network"
 	"github.com/moby/moby/client"
 
-	"qall-daemon-server/internal/object"
+	"github.com/qall-project/qall-daemon/server/internal/object"
 )
 
 type DockerRuntime struct {

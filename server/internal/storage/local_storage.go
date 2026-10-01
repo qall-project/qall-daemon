@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"log"
 
-	"qall-daemon-server/internal/datastore"
-	"qall-daemon-server/internal/registry"
+	"github.com/qall-project/qall-daemon/server/internal/datastore"
+	"github.com/qall-project/qall-daemon/server/internal/registry"
 
-	bs "qall-registry-server/pkg/blockstores/local"
-	regCore "qall-registry-server/pkg/core"
-	ds "qall-registry-server/pkg/datastores/local"
+	bs "github.com/qall-project/qall-registry/server/pkg/blockstores/local"
+	regCore "github.com/qall-project/qall-registry/server/pkg/core"
+	ds "github.com/qall-project/qall-registry/server/pkg/datastores/local"
 )
 
 func newLocalStorage() (*StorageCollection, error) {

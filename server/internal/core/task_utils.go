@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"qall-daemon-server/internal/object"
+	"github.com/qall-project/qall-daemon/server/object"
 )
 
 const defaultImage = "docker-proxy.internal.scaleway.com/python:3.13-slim"

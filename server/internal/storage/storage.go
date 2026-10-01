@@ -1,9 +1,10 @@
 package storage
 
 import (
-	"qall-daemon-server/internal/datastore"
-	"qall-daemon-server/internal/registry"
-	"qall-registry-server/pkg/blockstores"
+	"github.com/qall-project/qall-daemon/server/datastore"
+	"github.com/qall-project/qall-daemon/server/registry"
+
+	"github.com/qall-project/qall-registry/server/pkg/blockstores"
 )
 
 type StorageCollection struct {

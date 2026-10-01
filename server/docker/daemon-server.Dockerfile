@@ -4,14 +4,14 @@ RUN apk add --no-cache git
 
 WORKDIR /workspace
 
-COPY qall-registry-server/go.mod qall-registry-server/go.sum ./qall-registry-server/
+COPY github.com/qall-project/qall-registry/server/go.mod github.com/qall-project/qall-registry/server/go.sum ./github.com/qall-project/qall-registry/server/
 COPY qall-daemon-server/go.mod qall-daemon-server/go.sum ./qall-daemon-server/
 
 WORKDIR /workspace/qall-daemon-server
 RUN go mod download
 
 WORKDIR /workspace
-COPY qall-registry-server/ ./qall-registry-server/
+COPY github.com/qall-project/qall-registry/server/ ./github.com/qall-project/qall-registry/server/
 COPY qall-daemon-server/ ./qall-daemon-server/
 
 WORKDIR /workspace/qall-daemon-server

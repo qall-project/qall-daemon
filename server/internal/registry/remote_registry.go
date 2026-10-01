@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	pbRegistry "qall-daemon-server/internal/registry/protobuf/registry_api_v1"
+	pbRegistry "github.com/qall-project/qall-daemon/server/internal/registry/protobuf/registry_api_v1"
 )
 
 type RemoteRegistry struct {

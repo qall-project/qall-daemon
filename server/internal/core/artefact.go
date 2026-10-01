@@ -6,8 +6,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
-	"qall-daemon-server/internal/object"
 	"time"
+
+	"github.com/qall-project/qall-daemon/server/internal/object"
 )
 
 func (e *DaemonCore) CreateArtifact(ctx context.Context, req object.ArtifactRequest, auth bool) (*object.Artifact, error) {

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"qall-daemon-server/internal/object"
+	"github.com/qall-project/qall-daemon/server/internal/object"
 )
 
 func setupTestDB(t *testing.T) *SQLiteStore {

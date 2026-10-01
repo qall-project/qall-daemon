@@ -9,10 +9,10 @@ import (
 	"syscall"
 	"time"
 
-	"qall-daemon-server/internal/core"
-	"qall-daemon-server/internal/runtime"
-	"qall-daemon-server/internal/server"
-	"qall-daemon-server/internal/storage"
+	"github.com/qall-project/qall-daemon/server/internal/core"
+	"github.com/qall-project/qall-daemon/server/internal/runtime"
+	"github.com/qall-project/qall-daemon/server/internal/server"
+	"github.com/qall-project/qall-daemon/server/internal/storage"
 )
 
 type config struct {

@@ -5,13 +5,13 @@ import (
 	"log"
 	"sync"
 
-	"qall-daemon-server/internal/datastore"
-	"qall-daemon-server/internal/object"
-	"qall-daemon-server/internal/registry"
-	"qall-daemon-server/internal/runtime"
-	"qall-daemon-server/internal/watchdog"
+	"github.com/qall-project/qall-daemon/server/datastore"
+	"github.com/qall-project/qall-daemon/server/object"
+	"github.com/qall-project/qall-daemon/server/registry"
+	"github.com/qall-project/qall-daemon/server/runtime"
+	"github.com/qall-project/qall-daemon/server/watchdog"
 
-	"qall-registry-server/pkg/blockstores"
+	"github.com/qall-project/qall-registry/server/pkg/blockstores"
 )
 
 type DaemonCore struct {

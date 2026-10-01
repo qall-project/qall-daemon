@@ -1,4 +1,4 @@
-module qall-daemon-server
+module github.com/qall-project/qall-daemon/server
 
 go 1.26.3
 
@@ -15,7 +15,7 @@ require (
 	google.golang.org/grpc v1.81.1
 	google.golang.org/protobuf v1.36.11
 	modernc.org/sqlite v1.53.0
-	qall-registry-server v0.0.0-00010101000000-000000000000
+	github.com/qall-project/qall-registry/server v0.0.0-00010101000000-000000000000
 )
 
 require (
@@ -62,4 +62,4 @@ require (
 	modernc.org/memory v1.11.0 // indirect
 )
 
-replace qall-registry-server => ../qall-registry-server
+replace github.com/qall-project/qall-registry/server => ../github.com/qall-project/qall-registry/server

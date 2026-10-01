@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	pbDaemon "qall-daemon-server/internal/server/protobuf/daemon_runtime_api_v1"
+	pbDaemon "github.com/qall-project/qall-daemon/server/internal/server/protobuf/daemon_runtime_api_v1"
 )
 
 func StartServer(ctx context.Context, apiImpl *ApiV1Server, grpcPort string, httpPort string) error {

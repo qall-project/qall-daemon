@@ -9,8 +9,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"qall-daemon-server/internal/object"
-	"qall-daemon-server/internal/runtime"
+	"github.com/qall-project/qall-daemon/server/object"
+	"github.com/qall-project/qall-daemon/server/runtime"
 )
 
 func (e *DaemonCore) RunTask(

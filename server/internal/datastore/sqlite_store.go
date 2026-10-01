@@ -12,7 +12,7 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"qall-daemon-server/internal/object"
+	"github.com/qall-project/qall-daemon/server/internal/object"
 )
 
 type SQLiteStore struct {
