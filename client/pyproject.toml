@@ -27,4 +27,4 @@ dependencies = [
 [tool.setuptools_scm]
 
 [project.urls]
-Repository = "https://github.com/qall/qall-daemon-client"
+Repository = "https://github.com/qall-project/qall-daemon"

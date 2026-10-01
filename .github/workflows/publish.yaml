@@ -1,13 +1,19 @@
 name: Deploy to PyPi
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   publish:
     permissions:
       contents: write
-
+      id-token: write
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./client
 
     steps:
     - uses: actions/checkout@v4
@@ -21,14 +27,12 @@ jobs:
 
     - name: Install dependencies
       run: |
-        cd client/
         python -m pip install --upgrade pip
         pip install build twine setuptools-scm
 
     - name: Get version
       id: version
       run: |
-        cd client/
         version=$(sed -n 's/^ *version.*=.*"\([^"]*\)".*/\1/p' pyproject.toml)
         echo "version=$version" >> $GITHUB_ENV
         echo "Version : $version"
@@ -44,7 +48,7 @@ jobs:
 
     - name: Create and push tag
       run: |
-        git tag v$version
-        git push origin v$version
+        git tag "v${{ env.VERSION }}" || echo "Tag already exists"
+        git push origin "v${{ env.VERSION }}" || echo "Tag already pushed"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
