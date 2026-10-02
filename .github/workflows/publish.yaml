@@ -30,7 +30,7 @@ jobs:
     - name: Get version
       id: version
       run: |
-        version=$(sed -n 's/^ *version.*=.*"\([^"]*\)".*/\1/p' pyproject.toml)
+        version=$(sed -n 's/^ *version.*=.*"\([^"]*\)".*/\1/p' client/pyproject.toml)
         echo "VERSION=$version" >> $GITHUB_ENV
         echo "Version : $version"
 
