@@ -60,6 +60,7 @@ jobs:
           cache-to: type=gha,mode=max
 
     - name: Build package
+      working-directory: ./client
       run: python -m build --outdir ../dist
 
     - name: Publish package
