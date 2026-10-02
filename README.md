@@ -14,7 +14,7 @@ The daemon sits between the Qall computation model and the underlying execution 
         Qall computation graph (registry)
                   │
                   ▼
-            Qall Daemon
+            Qall Daemon (container)
                   │
        ┌──────────┼──────────┐
        ▼          ▼          ▼
@@ -23,7 +23,7 @@ The daemon sits between the Qall computation model and the underlying execution 
        └──────────┼──────────┘
                   ▼
              Task / Worker
-              runtimes
+              runtimes (container)
 ```
 
 It handles the execution lifecycle of Qall workloads, including:
