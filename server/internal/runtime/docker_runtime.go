@@ -257,16 +257,24 @@ func (d *DockerRuntime) StartTask(ctx context.Context, imageTag string, args obj
 		cmd = append(cmd, "--worker-address", wa)
 	}
 
+	envVariables := []string{
+		"PYTHONUNBUFFERED=1",
+		fmt.Sprintf("QALL_TOKEN_PATH=%s", workerTokenPath),
+		fmt.Sprintf("QALL_DAEMON_ADDRESS=%s:50053", d.daemonContainerID),
+	}
+
+	if args.EnvironmentVariables != nil {
+		for key, value := range args.EnvironmentVariables {
+			envVariables = append(envVariables, fmt.Sprintf("%s=%s", key, value))
+		}
+	}
+
 	resp, err := d.client.ContainerCreate(ctx, client.ContainerCreateOptions{
 		Name: args.Name,
 		Config: &container.Config{
 			Image: imageTag,
-			Env: []string{
-				"PYTHONUNBUFFERED=1",
-				fmt.Sprintf("QALL_DAEMON_ADDRESS=%s:50053", d.daemonContainerID),
-				fmt.Sprintf("QALL_TOKEN_PATH=%s", workerTokenPath),
-			},
-			Cmd: cmd,
+			Env:   envVariables,
+			Cmd:   cmd,
 		},
 		HostConfig: &container.HostConfig{
 			Mounts:      mounts,

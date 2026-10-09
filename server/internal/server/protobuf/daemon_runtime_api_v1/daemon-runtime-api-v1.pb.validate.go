@@ -61,8 +61,6 @@ func (m *DaemonInfo) validate(all bool) error {
 
 	// no validation rules for Version
 
-	// no validation rules for Provider
-
 	if len(errors) > 0 {
 		return DaemonInfoMultiError(errors)
 	}
@@ -164,7 +162,7 @@ func (m *CreateWorkerEntryRequest) validate(all bool) error {
 
 	// no validation rules for WorkerHash
 
-	// no validation rules for Provider
+	// no validation rules for WorkerProvider
 
 	// no validation rules for InputFormat
 
@@ -247,6 +245,115 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CreateWorkerEntryRequestValidationError{}
+
+// Validate checks the field values on CreateResourceAssignmentRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CreateResourceAssignmentRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CreateResourceAssignmentRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// CreateResourceAssignmentRequestMultiError, or nil if none found.
+func (m *CreateResourceAssignmentRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CreateResourceAssignmentRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for TaskHash
+
+	// no validation rules for ResourceProvider
+
+	// no validation rules for ResourceName
+
+	if len(errors) > 0 {
+		return CreateResourceAssignmentRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// CreateResourceAssignmentRequestMultiError is an error wrapping multiple
+// validation errors returned by CreateResourceAssignmentRequest.ValidateAll()
+// if the designated constraints aren't met.
+type CreateResourceAssignmentRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CreateResourceAssignmentRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CreateResourceAssignmentRequestMultiError) AllErrors() []error { return m }
+
+// CreateResourceAssignmentRequestValidationError is the validation error
+// returned by CreateResourceAssignmentRequest.Validate if the designated
+// constraints aren't met.
+type CreateResourceAssignmentRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CreateResourceAssignmentRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CreateResourceAssignmentRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CreateResourceAssignmentRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CreateResourceAssignmentRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CreateResourceAssignmentRequestValidationError) ErrorName() string {
+	return "CreateResourceAssignmentRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CreateResourceAssignmentRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCreateResourceAssignmentRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CreateResourceAssignmentRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CreateResourceAssignmentRequestValidationError{}
 
 // Validate checks the field values on CreateTaskRunRequest with the rules
 // defined in the proto definition for this message. If any rules are
@@ -1215,6 +1322,114 @@ var _ interface {
 	ErrorName() string
 } = ListArtifactsResponseValidationError{}
 
+// Validate checks the field values on ResourceAssignment with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ResourceAssignment) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ResourceAssignment with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ResourceAssignmentMultiError, or nil if none found.
+func (m *ResourceAssignment) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ResourceAssignment) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for TaskHash
+
+	// no validation rules for ResourceProvider
+
+	// no validation rules for ResourceName
+
+	if len(errors) > 0 {
+		return ResourceAssignmentMultiError(errors)
+	}
+
+	return nil
+}
+
+// ResourceAssignmentMultiError is an error wrapping multiple validation errors
+// returned by ResourceAssignment.ValidateAll() if the designated constraints
+// aren't met.
+type ResourceAssignmentMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ResourceAssignmentMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ResourceAssignmentMultiError) AllErrors() []error { return m }
+
+// ResourceAssignmentValidationError is the validation error returned by
+// ResourceAssignment.Validate if the designated constraints aren't met.
+type ResourceAssignmentValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ResourceAssignmentValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ResourceAssignmentValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ResourceAssignmentValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ResourceAssignmentValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ResourceAssignmentValidationError) ErrorName() string {
+	return "ResourceAssignmentValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ResourceAssignmentValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sResourceAssignment.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ResourceAssignmentValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ResourceAssignmentValidationError{}
+
 // Validate checks the field values on WorkerEntry with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -1237,9 +1452,9 @@ func (m *WorkerEntry) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Hash
+	// no validation rules for WorkerHash
 
-	// no validation rules for Provider
+	// no validation rules for WorkerProvider
 
 	// no validation rules for InputFormat
 

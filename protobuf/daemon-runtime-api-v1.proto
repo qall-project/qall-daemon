@@ -20,6 +20,13 @@ service Api {
     };
   }
 
+  rpc CreateResourceAssignment(CreateResourceAssignmentRequest) returns (ResourceAssignment) {
+    option (google.api.http) = {
+      post: "/v1/assignments"
+      body: "*"
+    };
+  }
+
   rpc CreateTaskRun(CreateTaskRunRequest) returns (TaskRun) {
     option (google.api.http) = {
       post: "/v1/task_runs"
@@ -56,13 +63,18 @@ service Api {
 message DaemonInfo {
   string name = 1;
   string version = 2;
-  string provider = 3;
 }
 
 message CreateWorkerEntryRequest {
   string worker_hash = 1;
-  string provider = 2;
+  string worker_provider = 2;
   string input_format = 3;
+}
+
+message CreateResourceAssignmentRequest {
+  string task_hash = 1;
+  string resource_provider = 2;
+  string resource_name = 3;
 }
 
 message CreateTaskRunRequest {
@@ -115,8 +127,14 @@ message ListArtifactsResponse {
   repeated Artifact artifacts = 1;
 }
 
+message ResourceAssignment {
+  string task_hash = 1;
+  string resource_provider = 2;
+  string resource_name = 3;
+}
+
 message WorkerEntry {
-  string hash = 1;
-  string provider = 2;
+  string worker_hash = 1;
+  string worker_provider = 2;
   string input_format = 3;
 }

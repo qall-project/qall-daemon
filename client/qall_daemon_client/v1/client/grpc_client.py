@@ -82,6 +82,23 @@ class GrpcDaemonClient(DaemonClient):
 
         return DaemonInfo(name=response.name, version=response.version)
 
+    def create_resource_assignment(
+        self, task_hash: str, resource_provider: str, resource_name: str
+    ) -> ResourceAssignment:
+        request = pb2.CreateWorkerEntryRequest(
+            task_hash=task_hash,
+            provider=resource_provider,
+            resource_name=resource_name,
+        )
+
+        response = self.__stub.CreateResourceAssignment(request)
+
+        return ResourceAssignment(
+            task_hash=response.task_hash,
+            resource_provider=response.resource_provider,
+            resource_name=response.resource_name,
+        )
+
     def create_worker_entry(
         self, worker_hash: str, worker_provider: str, input_format: str
     ) -> WorkerEntry:
@@ -94,8 +111,8 @@ class GrpcDaemonClient(DaemonClient):
         response = self.__stub.CreateWorkerEntry(request)
 
         return WorkerEntry(
-            hash=response.hash,
-            provider=response.provider,
+            worker_hash=response.worker_hash,
+            worker_provider=response.worker_provider,
             input_format=response.input_format,
         )
 

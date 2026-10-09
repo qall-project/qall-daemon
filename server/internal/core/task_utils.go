@@ -303,6 +303,8 @@ func (e *DaemonCore) buildProviderEnvVars(providerName string, credentials map[s
 	envVars := make([]string, 0, len(credentials)*3)
 	cleanProvider := strings.ToUpper(strings.TrimSpace(providerName))
 
+	envVars = append(envVars, fmt.Sprintf("QALL_PROVIDER=%s", cleanProvider))
+
 	for rawKey, value := range credentials {
 		trimmedKey := strings.TrimSpace(rawKey)
 		if trimmedKey == "" {
@@ -312,8 +314,12 @@ func (e *DaemonCore) buildProviderEnvVars(providerName string, credentials map[s
 		// Normalize key format (e.g., "secret-key" -> "SECRET_KEY")
 		normalizedKey := strings.ToUpper(strings.ReplaceAll(trimmedKey, "-", "_"))
 
+		envVars = append(envVars, fmt.Sprintf("QALL_PROVIDER_%s=%s", normalizedKey, value))
+
 		if cleanProvider != "" {
 			envVars = append(envVars, fmt.Sprintf("%s_%s=%s", cleanProvider, normalizedKey, value))
+
+			envVars = append(envVars, fmt.Sprintf("QALL_PROVIDER_%s_%s=%s", cleanProvider, normalizedKey, value))
 		}
 	}
 

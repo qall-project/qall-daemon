@@ -31,16 +31,32 @@ func (s *ApiV1Server) GetServiceInfo(ctx context.Context, in *emptypb.Empty) (*p
 func (s *ApiV1Server) CreateWorkerEntry(ctx context.Context, req *pbDaemon.CreateWorkerEntryRequest) (*pbDaemon.WorkerEntry, error) {
 	log.Println("Request received: CreateWorkerEntry")
 
-	wk, err := s.core.CreateWorkerEntry(ctx, req.GetProvider(), req.GetWorkerHash(), req.GetInputFormat())
+	wk, err := s.core.CreateWorkerEntry(ctx, req.GetWorkerProvider(), req.GetWorkerHash(), req.GetInputFormat())
 
 	if err != nil {
 		return nil, err
 	}
 
 	return &pbDaemon.WorkerEntry{
-		Provider:    wk.Provider,
-		Hash:        wk.Hash,
-		InputFormat: wk.InputFormat,
+		WorkerProvider: wk.WorkerProvider,
+		WorkerHash:     wk.WorkerHash,
+		InputFormat:    wk.InputFormat,
+	}, nil
+}
+
+func (s *ApiV1Server) CreateResourceAssignment(ctx context.Context, req *pbDaemon.CreateResourceAssignmentRequest) (*pbDaemon.ResourceAssignment, error) {
+	log.Println("Request received: CreateResourceAssignment")
+
+	ra, err := s.core.CreateResourceAssignment(ctx, req.GetResourceProvider(), req.GetTaskHash(), req.GetResourceName())
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &pbDaemon.ResourceAssignment{
+		ResourceProvider: ra.ResourceProvider,
+		TaskHash:         ra.TaskHash,
+		ResourceName:     ra.ResourceName,
 	}, nil
 }
 

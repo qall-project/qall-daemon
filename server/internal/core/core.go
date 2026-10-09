@@ -21,7 +21,7 @@ type DaemonCore struct {
 	artifactStore        blockstores.BlockStore
 	runtime              runtime.Runtime
 	workers              []*object.WorkerEntry
-	workerProvider       string
+	resourceAssignments  []*object.ResourceAssignment
 	watchdog             watchdog.WatchDog
 }
 
@@ -31,7 +31,6 @@ func NewDaemonCore(
 	meta datastore.MetadataStore,
 	bs blockstores.BlockStore,
 	runtime runtime.Runtime,
-	workerProvider string,
 ) (*DaemonCore, error) {
 
 	watchdog, err := watchdog.NewWatchdog(context.TODO())
@@ -47,7 +46,6 @@ func NewDaemonCore(
 		artifactStore:        bs,
 		runtime:              runtime,
 		watchdog:             watchdog,
-		workerProvider:       workerProvider,
 	}, nil
 }
 

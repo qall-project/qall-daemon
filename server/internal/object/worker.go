@@ -10,7 +10,7 @@ type WorkerPayload struct {
 }
 
 type WorkerEntry struct {
-	Provider    string
-	InputFormat string
-	Hash        string
+	WorkerProvider string
+	InputFormat    string
+	WorkerHash     string
 }

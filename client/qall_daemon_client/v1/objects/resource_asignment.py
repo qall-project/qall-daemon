@@ -15,7 +15,7 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class WorkerEntry:
-    worker_hash: str
-    worker_provider: str
-    input_format: str
+class ResourceAssigment:
+    task_hash: str
+    resource_provider: str
+    resource_name: str

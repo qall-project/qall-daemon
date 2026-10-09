@@ -50,6 +50,12 @@ class ApiStub(object):
             response_deserializer=daemon__runtime__api__v1__pb2.WorkerEntry.FromString,
             _registered_method=True,
         )
+        self.CreateResourceAssignment = channel.unary_unary(
+            "/daemon_runtime_api_v1.Api/CreateResourceAssignment",
+            request_serializer=daemon__runtime__api__v1__pb2.CreateResourceAssignmentRequest.SerializeToString,
+            response_deserializer=daemon__runtime__api__v1__pb2.ResourceAssignment.FromString,
+            _registered_method=True,
+        )
         self.CreateTaskRun = channel.unary_unary(
             "/daemon_runtime_api_v1.Api/CreateTaskRun",
             request_serializer=daemon__runtime__api__v1__pb2.CreateTaskRunRequest.SerializeToString,
@@ -97,6 +103,12 @@ class ApiServicer(object):
         context.set_details("Method not implemented!")
         raise NotImplementedError("Method not implemented!")
 
+    def CreateResourceAssignment(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
     def CreateTaskRun(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -139,6 +151,11 @@ def add_ApiServicer_to_server(servicer, server):
             servicer.CreateWorkerEntry,
             request_deserializer=daemon__runtime__api__v1__pb2.CreateWorkerEntryRequest.FromString,
             response_serializer=daemon__runtime__api__v1__pb2.WorkerEntry.SerializeToString,
+        ),
+        "CreateResourceAssignment": grpc.unary_unary_rpc_method_handler(
+            servicer.CreateResourceAssignment,
+            request_deserializer=daemon__runtime__api__v1__pb2.CreateResourceAssignmentRequest.FromString,
+            response_serializer=daemon__runtime__api__v1__pb2.ResourceAssignment.SerializeToString,
         ),
         "CreateTaskRun": grpc.unary_unary_rpc_method_handler(
             servicer.CreateTaskRun,
@@ -228,6 +245,36 @@ class Api(object):
             "/daemon_runtime_api_v1.Api/CreateWorkerEntry",
             daemon__runtime__api__v1__pb2.CreateWorkerEntryRequest.SerializeToString,
             daemon__runtime__api__v1__pb2.WorkerEntry.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def CreateResourceAssignment(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/daemon_runtime_api_v1.Api/CreateResourceAssignment",
+            daemon__runtime__api__v1__pb2.CreateResourceAssignmentRequest.SerializeToString,
+            daemon__runtime__api__v1__pb2.ResourceAssignment.FromString,
             options,
             channel_credentials,
             insecure,

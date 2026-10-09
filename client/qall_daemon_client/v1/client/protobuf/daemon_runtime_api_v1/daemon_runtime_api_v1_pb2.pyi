@@ -15,33 +15,43 @@ from typing import (
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class DaemonInfo(_message.Message):
-    __slots__ = ("name", "version", "provider")
+    __slots__ = ("name", "version")
     NAME_FIELD_NUMBER: _ClassVar[int]
     VERSION_FIELD_NUMBER: _ClassVar[int]
-    PROVIDER_FIELD_NUMBER: _ClassVar[int]
     name: str
     version: str
-    provider: str
     def __init__(
-        self,
-        name: _Optional[str] = ...,
-        version: _Optional[str] = ...,
-        provider: _Optional[str] = ...,
+        self, name: _Optional[str] = ..., version: _Optional[str] = ...
     ) -> None: ...
 
 class CreateWorkerEntryRequest(_message.Message):
-    __slots__ = ("worker_hash", "provider", "input_format")
+    __slots__ = ("worker_hash", "worker_provider", "input_format")
     WORKER_HASH_FIELD_NUMBER: _ClassVar[int]
-    PROVIDER_FIELD_NUMBER: _ClassVar[int]
+    WORKER_PROVIDER_FIELD_NUMBER: _ClassVar[int]
     INPUT_FORMAT_FIELD_NUMBER: _ClassVar[int]
     worker_hash: str
-    provider: str
+    worker_provider: str
     input_format: str
     def __init__(
         self,
         worker_hash: _Optional[str] = ...,
-        provider: _Optional[str] = ...,
+        worker_provider: _Optional[str] = ...,
         input_format: _Optional[str] = ...,
+    ) -> None: ...
+
+class CreateResourceAssignmentRequest(_message.Message):
+    __slots__ = ("task_hash", "resource_provider", "resource_name")
+    TASK_HASH_FIELD_NUMBER: _ClassVar[int]
+    RESOURCE_PROVIDER_FIELD_NUMBER: _ClassVar[int]
+    RESOURCE_NAME_FIELD_NUMBER: _ClassVar[int]
+    task_hash: str
+    resource_provider: str
+    resource_name: str
+    def __init__(
+        self,
+        task_hash: _Optional[str] = ...,
+        resource_provider: _Optional[str] = ...,
+        resource_name: _Optional[str] = ...,
     ) -> None: ...
 
 class CreateTaskRunRequest(_message.Message):
@@ -144,17 +154,32 @@ class ListArtifactsResponse(_message.Message):
         self, artifacts: _Optional[_Iterable[_Union[Artifact, _Mapping]]] = ...
     ) -> None: ...
 
+class ResourceAssignment(_message.Message):
+    __slots__ = ("task_hash", "resource_provider", "resource_name")
+    TASK_HASH_FIELD_NUMBER: _ClassVar[int]
+    RESOURCE_PROVIDER_FIELD_NUMBER: _ClassVar[int]
+    RESOURCE_NAME_FIELD_NUMBER: _ClassVar[int]
+    task_hash: str
+    resource_provider: str
+    resource_name: str
+    def __init__(
+        self,
+        task_hash: _Optional[str] = ...,
+        resource_provider: _Optional[str] = ...,
+        resource_name: _Optional[str] = ...,
+    ) -> None: ...
+
 class WorkerEntry(_message.Message):
-    __slots__ = ("hash", "provider", "input_format")
-    HASH_FIELD_NUMBER: _ClassVar[int]
-    PROVIDER_FIELD_NUMBER: _ClassVar[int]
+    __slots__ = ("worker_hash", "worker_provider", "input_format")
+    WORKER_HASH_FIELD_NUMBER: _ClassVar[int]
+    WORKER_PROVIDER_FIELD_NUMBER: _ClassVar[int]
     INPUT_FORMAT_FIELD_NUMBER: _ClassVar[int]
-    hash: str
-    provider: str
+    worker_hash: str
+    worker_provider: str
     input_format: str
     def __init__(
         self,
-        hash: _Optional[str] = ...,
-        provider: _Optional[str] = ...,
+        worker_hash: _Optional[str] = ...,
+        worker_provider: _Optional[str] = ...,
         input_format: _Optional[str] = ...,
     ) -> None: ...

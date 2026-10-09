@@ -87,6 +87,7 @@ func (e *DaemonCore) RunTask(
 		Token:                token,
 		WorkerAddresses:      workerAddresses,
 		Name:                 fmt.Sprintf("qall-task-%s", taskRunId[:8]),
+		EnvironmentVariables: envVariables,
 	}
 
 	containerID, err := e.startTask(

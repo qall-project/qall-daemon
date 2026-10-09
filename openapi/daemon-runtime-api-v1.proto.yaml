@@ -98,6 +98,31 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /v1/assignments:
+        post:
+            tags:
+                - Api
+            summary: CreateResourceAssignment
+            operationId: Api_CreateResourceAssignment
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreateResourceAssignmentRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ResourceAssignment'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /v1/task_runs:
         post:
             tags:
@@ -194,6 +219,15 @@ components:
                 payload:
                     type: string
                     format: byte
+        CreateResourceAssignmentRequest:
+            type: object
+            properties:
+                taskHash:
+                    type: string
+                resourceProvider:
+                    type: string
+                resourceName:
+                    type: string
         CreateTaskRunRequest:
             type: object
             properties:
@@ -210,7 +244,7 @@ components:
             properties:
                 workerHash:
                     type: string
-                provider:
+                workerProvider:
                     type: string
                 inputFormat:
                     type: string
@@ -220,8 +254,6 @@ components:
                 name:
                     type: string
                 version:
-                    type: string
-                provider:
                     type: string
         GoogleProtobufAny:
             type: object
@@ -238,6 +270,15 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/Artifact'
+        ResourceAssignment:
+            type: object
+            properties:
+                taskHash:
+                    type: string
+                resourceProvider:
+                    type: string
+                resourceName:
+                    type: string
         Status:
             type: object
             properties:
@@ -271,9 +312,9 @@ components:
         WorkerEntry:
             type: object
             properties:
-                hash:
+                workerHash:
                     type: string
-                provider:
+                workerProvider:
                     type: string
                 inputFormat:
                     type: string
