@@ -164,7 +164,7 @@ func (e *DaemonCore) startWorker(
 		TaskRunId:            taskRunId,
 		Port:                 "50051",
 		HostBlockRegistryDir: e.hostBlockRegistryDir,
-		WorkerHash:           worker.Hash,
+		WorkerHash:           worker.WorkerHash,
 		WorkerRunId:          workerRunId,
 		Name:                 fmt.Sprintf("qall-worker-%s", workerRunId[:8]),
 		EnvironmentVariables: envVariables,
@@ -191,7 +191,7 @@ func (e *DaemonCore) findWorker(
 	inputFormat string,
 ) (*object.WorkerEntry, error) {
 	for _, worker := range e.workers {
-		if worker.Provider == provider &&
+		if worker.WorkerProvider == provider &&
 			worker.InputFormat == inputFormat {
 			return worker, nil
 		}
