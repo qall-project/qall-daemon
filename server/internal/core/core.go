@@ -21,7 +21,7 @@ type DaemonCore struct {
 	artifactStore        blockstores.BlockStore
 	runtime              runtime.Runtime
 	workers              []*object.WorkerEntry
-	resourceAssignments  []*object.ResourceAssignment
+	resourceAssignments  map[string]*object.ResourceAssignment
 	watchdog             watchdog.WatchDog
 }
 
@@ -46,6 +46,7 @@ func NewDaemonCore(
 		artifactStore:        bs,
 		runtime:              runtime,
 		watchdog:             watchdog,
+		resourceAssignments:  make(map[string]*object.ResourceAssignment),
 	}, nil
 }
 

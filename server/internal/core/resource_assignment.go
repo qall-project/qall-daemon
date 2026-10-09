@@ -16,7 +16,7 @@ func (e *DaemonCore) CreateResourceAssignment(ctx context.Context,
 		ResourceName:     resourceName,
 	}
 
-	e.resourceAssignments = append(e.resourceAssignments, assignment)
+	e.resourceAssignments[taskHash] = assignment
 
 	return assignment, nil
 }

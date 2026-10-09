@@ -295,17 +295,17 @@ func (e *DaemonCore) stopWorkerRuns(
 	return nil
 }
 
-func (e *DaemonCore) buildProviderEnvVars(providerName string, credentials map[string]string) []string {
-	if len(credentials) == 0 {
+func (e *DaemonCore) buildProviderEnvVars(providerName string, envs map[string]string) []string {
+	if len(envs) == 0 {
 		return nil
 	}
 
-	envVars := make([]string, 0, len(credentials)*3)
+	envVars := make([]string, 0, len(envs)*3)
 	cleanProvider := strings.ToUpper(strings.TrimSpace(providerName))
 
 	envVars = append(envVars, fmt.Sprintf("QALL_PROVIDER=%s", cleanProvider))
 
-	for rawKey, value := range credentials {
+	for rawKey, value := range envs {
 		trimmedKey := strings.TrimSpace(rawKey)
 		if trimmedKey == "" {
 			continue

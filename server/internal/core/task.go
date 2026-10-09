@@ -50,7 +50,17 @@ func (e *DaemonCore) RunTask(
 		)
 	}
 
-	envVariables := e.buildProviderEnvVars(e.workerProvider, providerCredentials)
+	providerName := "local"
+	resourceName := "local"
+	assignment, exists := e.resourceAssignments[taskHash]
+
+	if exists {
+		providerName = assignment.ResourceProvider
+		resourceName = assignment.ResourceName
+		providerCredentials["target_resource"] = resourceName
+	}
+
+	envVariables := e.buildProviderEnvVars(providerName, providerCredentials)
 
 	workerRuns, err := e.startQuantumWorkers(
 		ctx,
