@@ -19,6 +19,7 @@ type TaskRuntimeArgs struct {
 	Token                string
 	WorkerAddresses      []string
 	Name                 string
+	EnvironmentVariables map[string]string
 }
 
 type WorkerRuntimeArgs struct {
@@ -30,6 +31,7 @@ type WorkerRuntimeArgs struct {
 	Token                string
 	Port                 string
 	Name                 string
+	EnvironmentVariables map[string]string
 }
 
 type WorkerRun struct {

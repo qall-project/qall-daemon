@@ -45,13 +45,29 @@ class CreateWorkerEntryRequest(_message.Message):
     ) -> None: ...
 
 class CreateTaskRunRequest(_message.Message):
-    __slots__ = ("task_hash", "artifact_hash")
+    __slots__ = ("task_hash", "artifact_hash", "provider_credentials")
+
+    class ProviderCredentialsEntry(_message.Message):
+        __slots__ = ("key", "value")
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: str
+        def __init__(
+            self, key: _Optional[str] = ..., value: _Optional[str] = ...
+        ) -> None: ...
+
     TASK_HASH_FIELD_NUMBER: _ClassVar[int]
     ARTIFACT_HASH_FIELD_NUMBER: _ClassVar[int]
+    PROVIDER_CREDENTIALS_FIELD_NUMBER: _ClassVar[int]
     task_hash: str
     artifact_hash: str
+    provider_credentials: _containers.ScalarMap[str, str]
     def __init__(
-        self, task_hash: _Optional[str] = ..., artifact_hash: _Optional[str] = ...
+        self,
+        task_hash: _Optional[str] = ...,
+        artifact_hash: _Optional[str] = ...,
+        provider_credentials: _Optional[_Mapping[str, str]] = ...,
     ) -> None: ...
 
 class TaskRun(_message.Message):

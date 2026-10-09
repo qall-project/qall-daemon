@@ -17,6 +17,7 @@ func (e *DaemonCore) RunTask(
 	ctx context.Context,
 	taskHash string,
 	artifactHash string,
+	providerCredentials map[string]string,
 ) (*object.TaskRun, error) {
 	if taskHash == "" {
 		return nil, fmt.Errorf("TaskHash can't be empty")
@@ -49,10 +50,13 @@ func (e *DaemonCore) RunTask(
 		)
 	}
 
+	envVariables := e.buildProviderEnvVars(e.workerProvider, providerCredentials)
+
 	workerRuns, err := e.startQuantumWorkers(
 		ctx,
 		taskPayload.QuantumRunInputFormats,
 		taskRun.Id,
+		envVariables,
 	)
 
 	if err != nil {

@@ -274,6 +274,8 @@ func (m *CreateTaskRunRequest) validate(all bool) error {
 
 	// no validation rules for ArtifactHash
 
+	// no validation rules for ProviderCredentials
+
 	if len(errors) > 0 {
 		return CreateTaskRunRequestMultiError(errors)
 	}

@@ -88,6 +88,16 @@ func extractTaskPayload(ctx context.Context, hash string, reg registry.RegistryP
 		return nil, fmt.Errorf("mandatory 'code' field missing")
 	}
 
+	if runtimeNode, err := block.LookupByString("runtime"); err == nil && runtimeNode.Kind() == ipld.Kind_Map {
+		if versionNode, err := runtimeNode.LookupByString("qall_version"); err == nil && versionNode.Kind() == ipld.Kind_String {
+			payload.RuntimeQallVersion, _ = versionNode.AsString()
+		} else {
+			return nil, fmt.Errorf("mandatory 'runtime.qall_version' field missing")
+		}
+	} else {
+		return nil, fmt.Errorf("mandatory 'runtime' field missing")
+	}
+
 	if metadataNode, err := block.LookupByString("metadata"); err == nil {
 		quantumRunsNode, err := metadataNode.LookupByString("quantum_runs")
 
@@ -220,6 +230,16 @@ func extractWorkerPayload(ctx context.Context, hash string, reg registry.Registr
 		payload.Code, _ = codeNode.AsString()
 	} else {
 		return nil, fmt.Errorf("mandatory 'code' field missing")
+	}
+
+	if runtimeNode, err := block.LookupByString("runtime"); err == nil && runtimeNode.Kind() == ipld.Kind_Map {
+		if versionNode, err := runtimeNode.LookupByString("qall_version"); err == nil && versionNode.Kind() == ipld.Kind_String {
+			payload.RuntimeQallVersion, _ = versionNode.AsString()
+		} else {
+			return nil, fmt.Errorf("mandatory 'runtime.qall_version' field missing")
+		}
+	} else {
+		return nil, fmt.Errorf("mandatory 'runtime' field missing")
 	}
 
 	if envNode, err := block.LookupByString("environment"); err == nil && envNode.Kind() == ipld.Kind_Map {

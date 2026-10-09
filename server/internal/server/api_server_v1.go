@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/qall-project/qall-daemon/server/internal/core"
@@ -29,7 +31,7 @@ func (s *ApiV1Server) GetServiceInfo(ctx context.Context, in *emptypb.Empty) (*p
 func (s *ApiV1Server) CreateWorkerEntry(ctx context.Context, req *pbDaemon.CreateWorkerEntryRequest) (*pbDaemon.WorkerEntry, error) {
 	log.Println("Request received: CreateWorkerEntry")
 
-	wk, err := s.core.CreateWorkerEntry(ctx, req.Provider, req.WorkerHash, req.InputFormat)
+	wk, err := s.core.CreateWorkerEntry(ctx, req.GetProvider(), req.GetWorkerHash(), req.GetInputFormat())
 
 	if err != nil {
 		return nil, err
@@ -45,7 +47,11 @@ func (s *ApiV1Server) CreateWorkerEntry(ctx context.Context, req *pbDaemon.Creat
 func (s *ApiV1Server) CreateTaskRun(ctx context.Context, req *pbDaemon.CreateTaskRunRequest) (*pbDaemon.TaskRun, error) {
 	log.Println("Request received: CreateTaskRun")
 
-	taskRun, err := s.core.RunTask(ctx, req.TaskHash, req.ArtifactHash)
+	if req.GetTaskHash() == "" {
+		return nil, status.Error(codes.InvalidArgument, "task_hash cannot be empty")
+	}
+
+	taskRun, err := s.core.RunTask(ctx, req.GetTaskHash(), req.GetArtifactHash(), req.GetProviderCredentials())
 
 	if err != nil {
 		return nil, err
@@ -60,7 +66,11 @@ func (s *ApiV1Server) CreateTaskRun(ctx context.Context, req *pbDaemon.CreateTas
 func (s *ApiV1Server) GetTaskRun(ctx context.Context, req *pbDaemon.GetTaskRunRequest) (*pbDaemon.TaskRun, error) {
 	log.Printf("Request received: GetTaskRun for ID: %s", req.TaskRunId)
 
-	taskRun, err := s.core.GetTaskStatus(ctx, req.TaskRunId)
+	if req.GetTaskRunId() == "" {
+		return nil, status.Error(codes.InvalidArgument, "task_run_id cannot be empty")
+	}
+
+	taskRun, err := s.core.GetTaskStatus(ctx, req.GetTaskRunId())
 	if err != nil {
 		return nil, err
 	}
@@ -88,14 +98,14 @@ func (s *ApiV1Server) GetTaskRun(ctx context.Context, req *pbDaemon.GetTaskRunRe
 func (s *ApiV1Server) CreateArtifact(ctx context.Context, req *pbDaemon.CreateArtifactRequest) (*pbDaemon.Artifact, error) {
 	log.Println("Request received: CreateArtifact")
 
-	auth, err := s.core.AuthTask(ctx, req.TaskRunId)
+	auth, err := s.core.AuthTask(ctx, req.GetTaskRunId())
 	if err != nil {
 		return nil, err
 	}
 
 	newArtifact := object.ArtifactRequest{
-		TaskRunId: req.TaskRunId,
-		Payload:   req.Payload,
+		TaskRunId: req.GetTaskRunId(),
+		Payload:   req.GetPayload(),
 	}
 
 	info, err := s.core.CreateArtifact(ctx, newArtifact, auth)
@@ -112,11 +122,11 @@ func (s *ApiV1Server) CreateArtifact(ctx context.Context, req *pbDaemon.CreateAr
 func (s *ApiV1Server) DownloadArtifact(ctx context.Context, req *pbDaemon.DownloadArtifactRequest) (*pbDaemon.ArtifactPayload, error) {
 	log.Println("Request received: DownloadArtifact")
 
-	if req.ArtifactHash == "" {
+	if req.GetArtifactHash() == "" {
 		return nil, fmt.Errorf("artifact_hash is required")
 	}
 
-	payload, err := s.core.GetArtifact(ctx, req.ArtifactHash)
+	payload, err := s.core.GetArtifact(ctx, req.GetArtifactHash())
 	if err != nil {
 		log.Printf("[Error] DownloadArtifact failed for hash %s: %v", req.ArtifactHash, err)
 		return nil, fmt.Errorf("failed to get artifact: %v", err)
@@ -130,13 +140,13 @@ func (s *ApiV1Server) DownloadArtifact(ctx context.Context, req *pbDaemon.Downlo
 func (s *ApiV1Server) ListArtifacts(ctx context.Context, req *pbDaemon.ListArtifactsRequest) (*pbDaemon.ListArtifactsResponse, error) {
 	log.Println("Request received: ListArtifacts")
 
-	if req.TaskRunId == "" {
-		return nil, fmt.Errorf("task_hash is required")
+	if req.GetTaskRunId() == "" {
+		return nil, fmt.Errorf("task_run_id is required")
 	}
 
-	artifacts, err := s.core.ListArtifacts(ctx, req.TaskRunId)
+	artifacts, err := s.core.ListArtifacts(ctx, req.GetTaskRunId())
 	if err != nil {
-		log.Printf("[Error] ListArtifacts failed for task %s: %v", req.TaskRunId, err)
+		log.Printf("[Error] ListArtifacts failed for task %s: %v", req.GetTaskRunId(), err)
 		return nil, fmt.Errorf("failed to list artifacts: %v", err)
 	}
 

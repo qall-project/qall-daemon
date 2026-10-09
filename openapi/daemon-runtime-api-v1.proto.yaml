@@ -201,6 +201,10 @@ components:
                     type: string
                 artifactHash:
                     type: string
+                providerCredentials:
+                    type: object
+                    additionalProperties:
+                        type: string
         CreateWorkerEntryRequest:
             type: object
             properties:

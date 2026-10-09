@@ -7,4 +7,5 @@ type TaskPayload struct {
 	Requirements           []string
 	QuantumRunInputFormats []string
 	Image                  string
+	RuntimeQallVersion     string
 }

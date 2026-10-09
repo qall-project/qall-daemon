@@ -30,7 +30,7 @@ type DockerRuntime struct {
 	networkName       string
 }
 
-const qallBaseImage = "scw/qall-base:local"
+const qallBaseImage = "rg.fr-par.scw.cloud/qall-project/qall-base:local"
 const HostSecretsDir = "/dev/shm/qall-secrets"
 const HostSandboxDir = "/tmp/qall_unifs"
 
@@ -100,34 +100,61 @@ func NewDockerRuntime(ctx context.Context) (*DockerRuntime, error) {
 	}, nil
 }
 
-func (d *DockerRuntime) CreateImage(ctx context.Context, targetImageName string, baseImageName string, requirements []string) (string, error) {
-	hashInput := fmt.Sprintf("%s|%s", baseImageName, requirements)
+func (d *DockerRuntime) CreateImage(
+	ctx context.Context,
+	targetImageName string,
+	baseImageName string,
+	qallVersion string,
+	requirements []string,
+) (string, error) {
+	hashInput := fmt.Sprintf(
+		"%s|qall:%s|%s",
+		baseImageName,
+		qallVersion,
+		strings.Join(requirements, "|"),
+	)
+
 	hash := sha256.Sum256([]byte(hashInput))
-	imageTag := fmt.Sprintf("%s:%s", targetImageName, hex.EncodeToString(hash[:])[:16])
+	imageTag := fmt.Sprintf(
+		"%s:%s",
+		targetImageName,
+		hex.EncodeToString(hash[:])[:16],
+	)
 
 	if _, err := d.client.ImageInspect(ctx, imageTag); err == nil {
-		log.Printf("[Docker-Build] Image %s already exists. Skipping build.", imageTag)
+		log.Printf(
+			"[Docker-Build] Image %s already exists. Skipping build.",
+			imageTag,
+		)
 		return imageTag, nil
 	}
 
-	log.Printf("[Docker-Build] Building new image %s with base %s and deps: %s", imageTag, baseImageName, requirements)
+	log.Printf(
+		"[Docker-Build] Building new image %s with base %s, qall %s and deps: %s",
+		imageTag,
+		baseImageName,
+		qallVersion,
+		requirements,
+	)
 
 	var dockerfile strings.Builder
-	dockerfile.WriteString(fmt.Sprintf("FROM %s AS qall-base\n", qallBaseImage))
-	dockerfile.WriteString(fmt.Sprintf("FROM %s\n", baseImageName))
+
+	dockerfile.WriteString(fmt.Sprintf(
+		"FROM %s\n",
+		baseImageName,
+	))
 	dockerfile.WriteString("WORKDIR /qall-workspace\n")
-	dockerfile.WriteString("COPY --from=qall-base /root/.local/bin/uv /usr/local/bin/uv\n")
-	dockerfile.WriteString("COPY --from=qall-base /qall-workspace /qall-workspace\n")
-	dockerfile.WriteString("ENV PATH=\"/usr/local/bin:/root/.local/bin:$PATH\"\n")
 
-	// Install with buildkit
-	dockerfile.WriteString("RUN --mount=type=cache,target=/root/.cache/uv " +
-		"uv pip install --system " +
-		"/qall-workspace/qall-registry-client " +
-		"/qall-workspace/qall-daemon-client " +
-		"/qall-workspace/qall\n")
+	// Install Qall from PyPI.
+	dockerfile.WriteString(
+		"RUN --mount=type=cache,target=/root/.cache/pip " +
+			fmt.Sprintf(
+				"pip install --cache-dir=/root/.cache/pip qall==%s\n",
+				qallVersion,
+			),
+	)
 
-	// Specific requirements to install
+	// Install task/worker-specific requirements.
 	if len(requirements) > 0 {
 		formattedReqs := make([]string, len(requirements))
 
@@ -136,7 +163,8 @@ func (d *DockerRuntime) CreateImage(ctx context.Context, targetImageName string,
 		}
 
 		dockerfile.WriteString(fmt.Sprintf(
-			"RUN --mount=type=cache,target=/root/.cache/uv uv pip install --system %s\n",
+			"RUN --mount=type=cache,target=/root/.cache/pip "+
+				"pip install --cache-dir=/root/.cache/pip %s\n",
 			strings.Join(formattedReqs, " "),
 		))
 	}
@@ -155,6 +183,7 @@ func (d *DockerRuntime) CreateImage(ctx context.Context, targetImageName string,
 	if err != nil {
 		return "", fmt.Errorf("failed to trigger image build: %w", err)
 	}
+
 	defer resp.Body.Close()
 
 	var buildLog bytes.Buffer
@@ -163,10 +192,17 @@ func (d *DockerRuntime) CreateImage(ctx context.Context, targetImageName string,
 	}
 
 	if strings.Contains(buildLog.String(), `"error":`) {
-		return "", fmt.Errorf("docker build failed for image %s:\n%s", imageTag, buildLog.String())
+		return "", fmt.Errorf(
+			"docker build failed for image %s:\n%s",
+			imageTag,
+			buildLog.String(),
+		)
 	}
 
-	log.Printf("[Docker-Build] Image %s built successfully.", imageTag)
+	log.Printf(
+		"[Docker-Build] Image %s built successfully.",
+		imageTag,
+	)
 
 	return imageTag, nil
 }
@@ -299,17 +335,25 @@ func (d *DockerRuntime) StartWorker(ctx context.Context, imageTag string, args o
 
 	containerName := args.Name
 
+	envVariables := []string{
+		"PYTHONUNBUFFERED=1",
+		fmt.Sprintf("TASK_RUN_ID=%s", args.TaskRunId),
+		fmt.Sprintf("QALL_TOKEN_PATH=%s", workerTokenPath),
+		fmt.Sprintf("QALL_DAEMON_ADDRESS=%s:50053", d.daemonContainerID),
+	}
+
+	if args.EnvironmentVariables != nil {
+		for key, value := range args.EnvironmentVariables {
+			envVariables = append(envVariables, fmt.Sprintf("%s=%s", key, value))
+		}
+	}
+
 	resp, err := d.client.ContainerCreate(ctx, client.ContainerCreateOptions{
 		Name: containerName,
 		Config: &container.Config{
 			Image: imageTag,
-			Env: []string{
-				"PYTHONUNBUFFERED=1",
-				fmt.Sprintf("TASK_RUN_ID=%s", args.TaskRunId),
-				fmt.Sprintf("QALL_TOKEN_PATH=%s", workerTokenPath),
-				fmt.Sprintf("QALL_DAEMON_ADDRESS=%s:50053", d.daemonContainerID),
-			},
-			Cmd: cmd,
+			Env:   envVariables,
+			Cmd:   cmd,
 		},
 		HostConfig: &container.HostConfig{
 			Mounts:      mounts,

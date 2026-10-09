@@ -103,11 +103,12 @@ class GrpcDaemonClient(DaemonClient):
         self,
         task_hash: str,
         artifact_hash: Optional[str] = None,
-        parent_task_run_id: Optional[str] = None,
+        provider_credentials: Optional[dict] = None,
     ) -> TaskRun:
         request = pb2.CreateTaskRunRequest(
             task_hash=task_hash,
             artifact_hash=artifact_hash or "",
+            provider_credentials=provider_credentials or {},
         )
         response = self.__stub.CreateTaskRun(request)
 

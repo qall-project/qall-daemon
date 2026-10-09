@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/qall-project/qall-daemon/server/internal/object"
 )
@@ -17,7 +18,7 @@ func (d *DaemonCore) startTask(ctx context.Context, args object.TaskRuntimeArgs)
 		targetImage = defaultImage
 	}
 
-	customImageTag, err := d.runtime.CreateImage(ctx, "qall-task", targetImage, args.Payload.Requirements)
+	customImageTag, err := d.runtime.CreateImage(ctx, "qall-task", targetImage, args.Payload.RuntimeQallVersion, args.Payload.Requirements)
 
 	if err != nil {
 		return "", err
@@ -36,6 +37,7 @@ func (e *DaemonCore) startQuantumWorkers(
 	ctx context.Context,
 	inputFormats []string,
 	taskRunId string,
+	envVariables map[string]string,
 ) ([]object.WorkerRun, error) {
 	if inputFormats == nil || len(inputFormats) == 0 {
 		return nil, nil
@@ -77,6 +79,7 @@ func (e *DaemonCore) startQuantumWorkers(
 			worker,
 			workerRunId,
 			taskRunId,
+			envVariables,
 		)
 
 		if err != nil {
@@ -111,6 +114,7 @@ func (e *DaemonCore) startWorker(
 	worker *object.WorkerEntry,
 	workerRunId string,
 	taskRunId string,
+	envVariables map[string]string,
 ) (string, string, error) {
 	workerPayload, err := getWorkerPayload(
 		ctx,
@@ -136,6 +140,7 @@ func (e *DaemonCore) startWorker(
 		ctx,
 		"qall-worker",
 		targetImage,
+		workerPayload.RuntimeQallVersion,
 		workerPayload.Requirements,
 	)
 
@@ -161,6 +166,7 @@ func (e *DaemonCore) startWorker(
 		WorkerHash:           worker.Hash,
 		WorkerRunId:          workerRunId,
 		Name:                 fmt.Sprintf("qall-worker-%s", workerRunId[:8]),
+		EnvironmentVariables: envVariables,
 	}
 
 	containerID, err := e.runtime.StartWorker(
@@ -287,4 +293,29 @@ func (e *DaemonCore) stopWorkerRuns(
 	}
 
 	return nil
+}
+
+func (e *DaemonCore) buildProviderEnvVars(providerName string, credentials map[string]string) []string {
+	if len(credentials) == 0 {
+		return nil
+	}
+
+	envVars := make([]string, 0, len(credentials)*3)
+	cleanProvider := strings.ToUpper(strings.TrimSpace(providerName))
+
+	for rawKey, value := range credentials {
+		trimmedKey := strings.TrimSpace(rawKey)
+		if trimmedKey == "" {
+			continue
+		}
+
+		// Normalize key format (e.g., "secret-key" -> "SECRET_KEY")
+		normalizedKey := strings.ToUpper(strings.ReplaceAll(trimmedKey, "-", "_"))
+
+		if cleanProvider != "" {
+			envVars = append(envVars, fmt.Sprintf("%s_%s=%s", cleanProvider, normalizedKey, value))
+		}
+	}
+
+	return envVars
 }
