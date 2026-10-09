@@ -1,6 +1,6 @@
 package object
 
-type ResourceAsignment struct {
+type ResourceAssignment struct {
 	ResourceProvider string
 	ResourceName     string
 	TaskHash         string

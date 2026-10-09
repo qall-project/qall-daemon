@@ -67,6 +67,7 @@ func (e *DaemonCore) RunTask(
 		taskPayload.QuantumRunInputFormats,
 		taskRun.Id,
 		envVariables,
+		providerName,
 	)
 
 	if err != nil {

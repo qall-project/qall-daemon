@@ -38,6 +38,7 @@ func (e *DaemonCore) startQuantumWorkers(
 	inputFormats []string,
 	taskRunId string,
 	envVariables map[string]string,
+	workerProvider string,
 ) ([]object.WorkerRun, error) {
 	if inputFormats == nil || len(inputFormats) == 0 {
 		return nil, nil
@@ -46,10 +47,10 @@ func (e *DaemonCore) startQuantumWorkers(
 	workerRuns := make([]object.WorkerRun, 0, len(inputFormats))
 
 	for _, inputFormat := range inputFormats {
-		log.Printf("[Core] Must start workers for provider %s with format %s", e.workerProvider, inputFormat)
+		log.Printf("[Core] Must start workers for provider %s with format %s", workerProvider, inputFormat)
 
 		worker, err := e.findWorker(
-			e.workerProvider,
+			workerProvider,
 			inputFormat,
 		)
 
@@ -118,14 +119,14 @@ func (e *DaemonCore) startWorker(
 ) (string, string, error) {
 	workerPayload, err := getWorkerPayload(
 		ctx,
-		worker.Hash,
+		worker.WorkerHash,
 		e.registry,
 	)
 
 	if err != nil {
 		return "", "", fmt.Errorf(
 			"failed to resolve worker payload %s: %w",
-			worker.Hash,
+			worker.WorkerHash,
 			err,
 		)
 	}
@@ -295,15 +296,15 @@ func (e *DaemonCore) stopWorkerRuns(
 	return nil
 }
 
-func (e *DaemonCore) buildProviderEnvVars(providerName string, envs map[string]string) []string {
+func (e *DaemonCore) buildProviderEnvVars(providerName string, envs map[string]string) map[string]string {
 	if len(envs) == 0 {
 		return nil
 	}
 
-	envVars := make([]string, 0, len(envs)*3)
+	envVars := make(map[string]string)
 	cleanProvider := strings.ToUpper(strings.TrimSpace(providerName))
 
-	envVars = append(envVars, fmt.Sprintf("QALL_PROVIDER=%s", cleanProvider))
+	envVars["QALL_PROVIDER"] = cleanProvider
 
 	for rawKey, value := range envs {
 		trimmedKey := strings.TrimSpace(rawKey)
@@ -314,12 +315,11 @@ func (e *DaemonCore) buildProviderEnvVars(providerName string, envs map[string]s
 		// Normalize key format (e.g., "secret-key" -> "SECRET_KEY")
 		normalizedKey := strings.ToUpper(strings.ReplaceAll(trimmedKey, "-", "_"))
 
-		envVars = append(envVars, fmt.Sprintf("QALL_PROVIDER_%s=%s", normalizedKey, value))
+		envVars[fmt.Sprintf("QALL_PROVIDER_%s", normalizedKey)] = value
 
 		if cleanProvider != "" {
-			envVars = append(envVars, fmt.Sprintf("%s_%s=%s", cleanProvider, normalizedKey, value))
-
-			envVars = append(envVars, fmt.Sprintf("QALL_PROVIDER_%s_%s=%s", cleanProvider, normalizedKey, value))
+			envVars[fmt.Sprintf("%s_%s=%s", cleanProvider, normalizedKey)] = value
+			envVars[fmt.Sprintf("QALL_PROVIDER_%s_%s=%s", cleanProvider, normalizedKey)] = value
 		}
 	}
 
