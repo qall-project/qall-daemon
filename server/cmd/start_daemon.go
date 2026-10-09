@@ -21,7 +21,6 @@ type config struct {
 	RemoteRegistryAddr   string
 	GrpcPort             string
 	HttpPort             string
-	WorkerProvider       string
 }
 
 func main() {
@@ -50,7 +49,6 @@ func main() {
 		stores.MetaStore,
 		stores.ArtifactBlockStore,
 		containerRuntime,
-		cfg.WorkerProvider,
 	)
 
 	if err != nil {
@@ -89,7 +87,6 @@ func parseFlags() *config {
 	flag.BoolVar(&cfg.IsLocal, "local", false, "Enable local mode")
 	flag.StringVar(&cfg.HostBlockRegistryDir, "host-task-dir", ".registry-data", "Path to the Block Registry on the host machine")
 	flag.StringVar(&cfg.RemoteRegistryAddr, "registry-addr", "127.0.0.1:50051", "Address of the remote registry")
-	flag.StringVar(&cfg.WorkerProvider, "worker-provider", "scaleway", "Worker provider name")
 	flag.StringVar(&cfg.GrpcPort, "grpc-port", "50053", "gRPC listening port")
 	flag.StringVar(&cfg.HttpPort, "http-port", "8080", "HTTP (Gateway) listening port")
 	flag.Parse()
