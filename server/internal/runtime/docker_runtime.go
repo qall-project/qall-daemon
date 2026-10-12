@@ -144,8 +144,6 @@ func (d *DockerRuntime) CreateImage(
 		baseImageName,
 	))
 	dockerfile.WriteString("WORKDIR /qall-workspace\n")
-	dockerfile.WriteString("ADD https://astral.sh/uv/install.sh /uv-install.sh")
-	dockerfile.WriteString("RUN sh /uv-install.sh && rm /uv-install.sh")
 
 	// Install Qall from PyPI.
 	dockerfile.WriteString(
@@ -246,7 +244,7 @@ func (d *DockerRuntime) StartTask(ctx context.Context, imageTag string, args obj
 	}
 
 	cmd := []string{
-		"uv", "run", "qall", "task", "run",
+		"qall", "task", "run",
 		args.TaskHash, args.TaskRunId,
 		"--block-registry", workerRegistryDir,
 	}
