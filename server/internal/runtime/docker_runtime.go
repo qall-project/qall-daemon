@@ -335,7 +335,7 @@ func (d *DockerRuntime) StartWorker(ctx context.Context, imageTag string, args o
 	}
 
 	cmd := []string{
-		"uv", "run", "qall", "worker", "run",
+		"qall", "worker", "run",
 		args.WorkerHash,
 		"--block-registry", workerRegistryDir,
 		"--port", args.Port,
