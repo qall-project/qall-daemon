@@ -144,6 +144,8 @@ func (d *DockerRuntime) CreateImage(
 		baseImageName,
 	))
 	dockerfile.WriteString("WORKDIR /qall-workspace\n")
+	dockerfile.WriteString("ADD https://astral.sh/uv/install.sh /uv-install.sh")
+	dockerfile.WriteString("RUN sh /uv-install.sh && rm /uv-install.sh")
 
 	// Install Qall from PyPI.
 	dockerfile.WriteString(
