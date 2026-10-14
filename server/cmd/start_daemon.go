@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"log"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -25,7 +24,8 @@ type config struct {
 
 func main() {
 	cfg := parseFlags()
-	ctx := context.Background()
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
+	defer stop()
 
 	stores, err := storage.NewStorage(cfg.IsLocal)
 
@@ -55,29 +55,29 @@ func main() {
 		log.Fatalf("Fatal: Failed to create daemon core: %v", err)
 	}
 
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-
-	go func() {
-		sig := <-sigChan
-		log.Printf("[Main] Received signal %v. Shutting down daemon...", sig)
-
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-
-		if err := dcore.Shutdown(shutdownCtx); err != nil {
-			log.Printf("[Main Error] Graceful shutdown error: %v", err)
-		}
-
-		os.Exit(0)
-	}()
-
 	apiImpl := server.NewApiV1Server(dcore)
 
 	log.Printf("[Daemon] Starting Qall daemon (Local Mode: %v)", cfg.IsLocal)
 
-	if err := server.StartServer(ctx, apiImpl, cfg.GrpcPort, cfg.HttpPort); err != nil {
+	errCh := make(chan error, 1)
+
+	go func() {
+		errCh <- server.StartServer(ctx, apiImpl, cfg.GrpcPort, cfg.HttpPort)
+	}()
+
+	select {
+	case err := <-errCh:
 		log.Fatalf("Fatal: Network servers crashed: %v", err)
+	case <-ctx.Done():
+		log.Printf("[Daemon] Received shutdown signal, gracefully stopping task containers...")
+
+		stopCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		if err := dcore.StopAllTasks(stopCtx); err != nil {
+			log.Printf("[Daemon] Failed to gracefully stop all task containers: %v", err)
+		}
+		log.Printf("[Daemon] Shutdown complete.")
 	}
 }
 

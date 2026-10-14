@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/qall-project/qall-daemon/server/internal/object"
+	"qall-daemon-server/internal/object"
 )
 
 func setupTestDB(t *testing.T) *SQLiteStore {
@@ -18,62 +18,63 @@ func setupTestDB(t *testing.T) *SQLiteStore {
 	return store
 }
 
-func TestTaskContainerUpdate(t *testing.T) {
+func createTaskRun(t *testing.T, store *SQLiteStore, ctx context.Context, containerID string) string {
+	t.Helper()
+	id, err := store.CreateTaskRun(
+		ctx,
+		object.TaskRun{ContainerId: containerID, Status: object.StatusPending},
+	)
+	if err != nil {
+		t.Fatalf("Failed to create task run: %v", err)
+	}
+	return id
+}
+
+func TestTaskRunUpdate(t *testing.T) {
 	store := setupTestDB(t)
 	defer store.Close()
 
 	ctx := context.Background()
-	taskRunID := "task-123"
-	containerID := "container-abc"
+	taskRunID := createTaskRun(t, store, ctx, "container-abc")
 	updatedContainerID := "container-xyz"
 
-	err := store.SaveTaskContainer(ctx, taskRunID, containerID)
+	retrieved, err := store.GetTaskRun(ctx, taskRunID)
 	if err != nil {
-		t.Fatalf("Failed to save task container: %v", err)
+		t.Fatalf("Failed to get task run: %v", err)
 	}
 
-	retrievedID, exists, err := store.GetTaskContainer(ctx, taskRunID)
-	if err != nil || !exists {
-		t.Fatalf("Failed to get task container, exists: %v, err: %v", exists, err)
+	if retrieved.ContainerId != "container-abc" {
+		t.Errorf("Expected container ID %s, got %s", "container-abc", retrieved.ContainerId)
 	}
 
-	if retrievedID != containerID {
-		t.Errorf("Expected container ID %s, got %s", containerID, retrievedID)
+	retrieved.ContainerId = updatedContainerID
+	if _, err := store.UpdateTaskRun(ctx, retrieved); err != nil {
+		t.Fatalf("Failed to update task run: %v", err)
 	}
 
-	err = store.SaveTaskContainer(ctx, taskRunID, updatedContainerID)
-
+	updated, err := store.GetTaskRun(ctx, taskRunID)
 	if err != nil {
-		t.Fatalf("Failed to update task container: %v", err)
+		t.Fatalf("Failed to get task run after update: %v", err)
+	}
+
+	if updated.ContainerId != updatedContainerID {
+		t.Errorf("Expected updated container ID %s, got %s", updatedContainerID, updated.ContainerId)
 	}
 }
 
-func TestTaskContainerDelete(t *testing.T) {
+func TestTaskRunDelete(t *testing.T) {
 	store := setupTestDB(t)
 	defer store.Close()
 
 	ctx := context.Background()
-	taskRunID := "task-test"
-	containerID := "container-abc"
+	taskRunID := createTaskRun(t, store, ctx, "container-abc")
 
-	err := store.SaveTaskContainer(ctx, taskRunID, containerID)
-	if err != nil {
-		t.Fatalf("Failed to save task container: %v", err)
+	if err := store.DeleteTaskRun(ctx, taskRunID); err != nil {
+		t.Fatalf("Failed to delete task run: %v", err)
 	}
 
-	retrievedID, _, _ := store.GetTaskContainer(ctx, taskRunID)
-	if retrievedID != containerID {
-		t.Errorf("Expected updated container ID %s, got %s", containerID, retrievedID)
-	}
-
-	err = store.DeleteTaskContainer(ctx, taskRunID)
-	if err != nil {
-		t.Fatalf("Failed to delete task container: %v", err)
-	}
-
-	_, exists, err := store.GetTaskContainer(ctx, taskRunID)
-	if err != nil || exists {
-		t.Errorf("Expected task to be deleted, exists: %v, err: %v", exists, err)
+	if _, err := store.GetTaskRun(ctx, taskRunID); err == nil {
+		t.Errorf("Expected task run to be deleted, got no error")
 	}
 }
 
@@ -82,7 +83,7 @@ func TestArtifactMeta_OneTask(t *testing.T) {
 	defer store.Close()
 
 	ctx := context.Background()
-	taskRunID := "task-test"
+	taskRunID := createTaskRun(t, store, ctx, "container-def")
 	artifactHash := "hash-test"
 	now := time.Now().UTC()
 
@@ -92,13 +93,7 @@ func TestArtifactMeta_OneTask(t *testing.T) {
 		CreatedAt: now,
 	}
 
-	err := store.SaveTaskContainer(ctx, taskRunID, "container-def")
-	if err != nil {
-		t.Fatalf("Failed to create parent task: %v", err)
-	}
-
-	err = store.SaveArtifactMeta(ctx, meta)
-	if err != nil {
+	if err := store.CreateArtifactMeta(ctx, meta); err != nil {
 		t.Fatalf("Failed to save artifact meta: %v", err)
 	}
 
@@ -128,8 +123,8 @@ func TestArtifactMeta_MultipleTask(t *testing.T) {
 	defer store.Close()
 
 	ctx := context.Background()
-	taskRunID_1 := "task-abc"
-	taskRunID_2 := "task-xyz"
+	taskRunID_1 := createTaskRun(t, store, ctx, "container-def-1")
+	taskRunID_2 := createTaskRun(t, store, ctx, "container-def-2")
 	artifactHash := "hash-test"
 	now := time.Now().UTC()
 
@@ -145,24 +140,10 @@ func TestArtifactMeta_MultipleTask(t *testing.T) {
 		CreatedAt: now,
 	}
 
-	err := store.SaveTaskContainer(ctx, taskRunID_1, "container-def-1")
-	if err != nil {
-		t.Fatalf("Failed to create parent task: %v", err)
-	}
-	err = store.SaveTaskContainer(ctx, taskRunID_2, "container-def-2")
-	if err != nil {
-		t.Fatalf("Failed to create parent task: %v", err)
-	}
-
-	// Save artifact meta of the 1st task
-	err = store.SaveArtifactMeta(ctx, meta_1)
-	if err != nil {
+	if err := store.CreateArtifactMeta(ctx, meta_1); err != nil {
 		t.Fatalf("Failed to save artifact meta_1: %v", err)
 	}
-
-	// Save artifact meta of the 2nd task
-	err = store.SaveArtifactMeta(ctx, meta_2)
-	if err != nil {
+	if err := store.CreateArtifactMeta(ctx, meta_2); err != nil {
 		t.Fatalf("Failed to save artifact meta_2: %v", err)
 	}
 
@@ -196,17 +177,16 @@ func TestArtifactMeta_NoTask(t *testing.T) {
 	defer store.Close()
 
 	ctx := context.Background()
-	taskRunID := "task-test"
 	artifactHash := "hash-test"
 	now := time.Now().UTC()
 
 	meta := object.ArtifactMeta{
 		Hash:      artifactHash,
-		TaskRunID: taskRunID,
+		TaskRunID: "ghost-task",
 		CreatedAt: now,
 	}
 
-	err := store.SaveArtifactMeta(ctx, meta)
+	err := store.CreateArtifactMeta(ctx, meta)
 	if err == nil {
 		t.Fatal("Expected FOREIGN KEY constraint failure when inserting artifact without existing task")
 	}
@@ -217,7 +197,7 @@ func TestArtifactMeta_DeleteTask(t *testing.T) {
 	defer store.Close()
 
 	ctx := context.Background()
-	taskRunID := "task-test"
+	taskRunID := createTaskRun(t, store, ctx, "container-def")
 	artifactHash := "hash-test"
 	now := time.Now().UTC()
 
@@ -227,23 +207,19 @@ func TestArtifactMeta_DeleteTask(t *testing.T) {
 		CreatedAt: now,
 	}
 
-	err := store.SaveTaskContainer(ctx, taskRunID, "container-def")
-	if err != nil {
-		t.Fatalf("Failed to create parent task: %v", err)
-	}
-
-	err = store.SaveArtifactMeta(ctx, meta)
-	if err != nil {
+	if err := store.CreateArtifactMeta(ctx, meta); err != nil {
 		t.Fatalf("Failed to save artifact meta: %v", err)
 	}
 
-	err = store.DeleteTaskContainer(ctx, taskRunID)
-	if err != nil {
+	if err := store.DeleteTaskRun(ctx, taskRunID); err != nil {
 		t.Fatalf("Failed to delete parent task: %v", err)
 	}
 
-	_, err = store.GetArtifactMeta(ctx, artifactHash)
-	if err == nil {
+	metas, err := store.GetArtifactMeta(ctx, artifactHash)
+	if err != nil {
+		t.Fatalf("Failed to get artifact meta after task deletion: %v", err)
+	}
+	if len(metas) != 0 {
 		t.Fatal("Expected artifact to be deleted via CASCADE, but it still exists")
 	}
 }
@@ -253,13 +229,15 @@ func TestGetNonExistentData(t *testing.T) {
 	defer store.Close()
 	ctx := context.Background()
 
-	_, exists, err := store.GetTaskContainer(ctx, "ghost-task")
-	if err != nil || exists {
-		t.Errorf("Expected no error and exists=false, got exists=%v, err=%v", exists, err)
+	if _, err := store.GetTaskRun(ctx, "ghost-task"); err == nil {
+		t.Errorf("Expected error when fetching non-existent task run, got nil")
 	}
 
-	_, err = store.GetArtifactMeta(ctx, "ghost-hash")
-	if err == nil {
-		t.Error("Expected error when fetching non-existent artifact meta, got nil")
+	metas, err := store.GetArtifactMeta(ctx, "ghost-hash")
+	if err != nil {
+		t.Errorf("Expected no error when fetching non-existent artifact meta, got %v", err)
+	}
+	if len(metas) != 0 {
+		t.Errorf("Expected no artifact meta entries, got %d", len(metas))
 	}
 }

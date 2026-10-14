@@ -2,8 +2,6 @@ package core
 
 import (
 	"context"
-	"log"
-	"sync"
 
 	"github.com/qall-project/qall-daemon/server/internal/datastore"
 	"github.com/qall-project/qall-daemon/server/internal/object"
@@ -50,46 +48,9 @@ func NewDaemonCore(
 	}, nil
 }
 
-func (e *DaemonCore) Shutdown(ctx context.Context) error {
-	log.Println("[Daemon] Initiating graceful shutdown. Cleaning up active containers...")
-
-	workers, err := e.taskStore.ListWorkerRuns(ctx)
-
-	if err != nil {
-		log.Printf("[Daemon Shutdown Warning] Could not query active workers: %v", err)
-	}
-
-	var wg sync.WaitGroup
-
-	for _, w := range workers {
-		if w.ContainerId == "" {
-			continue
-		}
-
-		wg.Add(1)
-		go func(containerID string) {
-			defer wg.Done()
-			log.Printf("[Daemon Shutdown] Stopping worker container %s...", containerID[:12])
-
-			if err := e.runtime.Stop(ctx, containerID); err != nil {
-				log.Printf("[Daemon Shutdown Warning] Failed to stop worker container %s: %v", containerID, err)
-			}
-
-		}(w.ContainerId)
-	}
-
-	done := make(chan struct{})
-	go func() {
-		wg.Wait()
-		close(done)
-	}()
-
-	select {
-	case <-done:
-		log.Println("[Daemon] All worker containers stopped successfully.")
-	case <-ctx.Done():
-		log.Println("[Daemon Shutdown Warning] Shutdown timed out. Some containers may still be stopping.")
-	}
-
-	return nil
+// StopAllTasks gracefully stops every task/worker container managed by the
+// daemon. It is invoked when the daemon is shutting down so that running tasks
+// are killed before the daemon process exits.
+func (e *DaemonCore) StopAllTasks(ctx context.Context) error {
+	return e.runtime.StopAll(ctx)
 }

@@ -12,7 +12,7 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"github.com/qall-project/qall-daemon/server/internal/object"
+	"qall-daemon-server/internal/object"
 )
 
 type SQLiteStore struct {
@@ -28,7 +28,10 @@ func NewSQLiteStore(rootDir string) (*SQLiteStore, error) {
 
 	db, err := sql.Open(
 		"sqlite",
-		dbPath+"?_pragma=foreign_keys(1)",
+		dbPath+
+			"?_pragma=busy_timeout(5000)"+
+			"&_pragma=journal_mode(WAL)"+
+			"&_pragma=foreign_keys(1)",
 	)
 	if err != nil {
 		return nil, fmt.Errorf(

@@ -20,7 +20,12 @@ func StartServer(ctx context.Context, apiImpl *ApiV1Server, grpcPort string, htt
 		return fmt.Errorf("failed to listen on gRPC port %s: %w", grpcPort, err)
 	}
 
-	grpcServer := grpc.NewServer()
+	maxMsgSize := 1024 * 1024 * 2000
+	grpcServer := grpc.NewServer(
+		grpc.EmptyServerOption{},
+		grpc.MaxRecvMsgSize(maxMsgSize),
+		grpc.MaxSendMsgSize(maxMsgSize),
+	)
 	pbDaemon.RegisterApiServer(grpcServer, apiImpl)
 
 	go func() {
