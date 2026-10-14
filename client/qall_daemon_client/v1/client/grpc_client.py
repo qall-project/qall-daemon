@@ -47,7 +47,7 @@ class GrpcDaemonClient(DaemonClient):
         self,
         url: str = "localhost:50053",
         token: Optional[str] = None,
-        local_unified_fs: str = "/tmp/qall_unifs",
+        local_unified_fs: str = "/tmp/qall/unifs",
     ):
         self.__url = url
         self.__channel: Optional[grpc.Channel] = None
@@ -55,9 +55,7 @@ class GrpcDaemonClient(DaemonClient):
         self.__token = token
         self.__unifs = Path(local_unified_fs)
 
-        if not self.__unifs.exists():
-            self.__unifs.mkdir(mode=0o774, parents=True)
-        self.__unifs.chmod(0o774)
+        self.__unifs.mkdir(mode=0o777, parents=True, exist_ok=True)
 
     def __enter__(self):
         self.connect()
