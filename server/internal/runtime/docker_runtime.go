@@ -34,7 +34,6 @@ type DockerRuntime struct {
 	buildGroup        singleflight.Group
 }
 
-const qallBaseImage = "rg.fr-par.scw.cloud/qall-project/qall-base:local"
 const HostSecretsDir = "/dev/shm/qall-secrets"
 const HostDataloadersDir = "/dev/shm/qall-dataloaders"
 const HostSandboxDir = "/tmp/qall/unifs"
@@ -105,53 +104,78 @@ func NewDockerRuntime(ctx context.Context) (*DockerRuntime, error) {
 	}, nil
 }
 
-func (d *DockerRuntime) CreateImage(ctx context.Context, imageName string, requirements []string) (string, error) {
-	hashInput := fmt.Sprintf("%s|%s", imageName, requirements)
+func (d *DockerRuntime) CreateImage(
+	ctx context.Context,
+	targetImageName string,
+	baseImageName string,
+	qallVersion string,
+	requirements []string,
+) (string, error) {
+	hashInput := fmt.Sprintf(
+		"%s|qall:%s|%s",
+		baseImageName,
+		qallVersion,
+		strings.Join(requirements, "|"),
+	)
+
 	hash := sha256.Sum256([]byte(hashInput))
-	imageTag := fmt.Sprintf("qall-task:%s", hex.EncodeToString(hash[:])[:16])
+	imageTag := fmt.Sprintf(
+		"%s:%s",
+		targetImageName,
+		hex.EncodeToString(hash[:])[:16],
+	)
 
 	// singleflight ensures only one execution runs for the same imageTag at a time
 	_, err, _ := d.buildGroup.Do(imageTag, func() (interface{}, error) {
 		if _, err := d.client.ImageInspect(ctx, imageTag); err == nil {
-			log.Printf("[Docker-Build] Image %s already exists. Skipping build.", imageTag)
+			log.Printf(
+				"[Docker-Build] Image %s already exists. Skipping build.",
+				imageTag,
+			)
 			return nil, nil
 		}
 
-		log.Printf("[Docker-Build] Building new image %s with base %s and deps: %s", imageTag, imageName, requirements)
+		log.Printf(
+			"[Docker-Build] Building new image %s with base %s, qall %s and deps: %s",
+			imageTag,
+			baseImageName,
+			qallVersion,
+			requirements,
+		)
 
-		var dockerfile string
-		dockerfile += fmt.Sprintf("FROM %s AS qall-base\n", qallBaseImage)
-		dockerfile += fmt.Sprintf("FROM %s\n", imageName)
-		dockerfile += "WORKDIR /qall-workspace\n"
-		dockerfile += "COPY --from=qall-base /root/.local/bin/uv /usr/local/bin/uv\n"
-		dockerfile += "COPY --from=qall-base /qall-workspace /qall-workspace\n"
+		var dockerfile strings.Builder
 
-		toolInstall := "RUN uv tool install /qall-workspace/qall --python 3.13"
+		dockerfile.WriteString(fmt.Sprintf(
+			"FROM %s\n",
+			baseImageName,
+		))
+		dockerfile.WriteString("WORKDIR /qall-workspace\n")
+
+		// Install Qall from PyPI.
+		dockerfile.WriteString(
+			"RUN --mount=type=cache,target=/root/.cache/pip " +
+				fmt.Sprintf(
+					"pip install --cache-dir=/root/.cache/pip qall%s\n",
+					qallVersionArg(qallVersion),
+				),
+		)
+
+		// Install task/worker-specific requirements.
 		if len(requirements) > 0 {
-			// Strip newlines to prevent basic Dockerfile instruction injection,
-			// then fold each requirement into the tool install as a --with dep,
-			// so per-task packages land in the same interpreter that later runs
-			// `qall task run` (the uv tool venv), not the base image's system
-			// python — otherwise the task subprocess cannot import them.
+			formattedReqs := make([]string, len(requirements))
 
-			// Temporary fix to allow the import and use of opencv in an example workflow
-			dockerfile += "RUN apt-get update && apt-get install -y libgl1 libglib2.0-0 && rm -rf /var/lib/apt/lists/*\n"
-
-			for _, reqGroup := range requirements {
-				safeRequirements := strings.ReplaceAll(reqGroup, "\n", " ")
-				safeRequirements = strings.ReplaceAll(safeRequirements, "\r", "")
-
-				for _, req := range strings.Fields(safeRequirements) {
-					toolInstall += fmt.Sprintf(" --with %s", req)
-				}
+			for i, req := range requirements {
+				formattedReqs[i] = fmt.Sprintf("%q", req)
 			}
+
+			dockerfile.WriteString(fmt.Sprintf(
+				"RUN --mount=type=cache,target=/root/.cache/pip "+
+					"pip install --cache-dir=/root/.cache/pip %s\n",
+				strings.Join(formattedReqs, " "),
+			))
 		}
 
-		dockerfile += "RUN uv python install 3.13\n"
-		dockerfile += toolInstall + "\n"
-		dockerfile += "ENV PATH=\"/root/.local/bin:$PATH\"\n"
-
-		buildCtx, err := createTarStream("Dockerfile", dockerfile)
+		buildCtx, err := createTarStream("Dockerfile", dockerfile.String())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create build context: %w", err)
 		}
@@ -162,7 +186,7 @@ func (d *DockerRuntime) CreateImage(ctx context.Context, imageName string, requi
 			Version: build.BuilderBuildKit,
 		})
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to trigger image build: %w", err)
 		}
 		defer resp.Body.Close()
 
@@ -171,7 +195,10 @@ func (d *DockerRuntime) CreateImage(ctx context.Context, imageName string, requi
 			return nil, fmt.Errorf("docker build failed: %w", err)
 		}
 
-		log.Printf("[Docker-Build] Image %s built successfully.", imageTag)
+		log.Printf(
+			"[Docker-Build] Image %s built successfully.",
+			imageTag,
+		)
 		return nil, nil
 	})
 
@@ -180,6 +207,16 @@ func (d *DockerRuntime) CreateImage(ctx context.Context, imageName string, requi
 	}
 
 	return imageTag, nil
+}
+
+// qallVersionArg returns the pin suffix for `pip install qall`, i.e. `==<version>`
+// when a version is provided and an empty string when it is not.
+func qallVersionArg(qallVersion string) string {
+	if qallVersion == "" {
+		return ""
+	}
+
+	return fmt.Sprintf("==%s", qallVersion)
 }
 
 func (d *DockerRuntime) StartTask(ctx context.Context, imageTag string, args object.TaskRuntimeArgs) (string, error) {

@@ -84,16 +84,28 @@ func (m *mockMetaStore) ListArtifactsByTask(ctx context.Context, taskRunID strin
 
 type mockContainerRuntime struct{}
 
-func (m *mockContainerRuntime) EnsureImage(ctx context.Context, image string, requirements string) (string, error) {
-	return "mock-image:latest", nil
+func (m *mockContainerRuntime) CreateImage(ctx context.Context, targetImageName, baseImageName, qallVersion string, requirements []string) (string, error) {
+	return targetImageName + ":test", nil
 }
 
-func (m *mockContainerRuntime) StartWorker(ctx context.Context, image string, args object.ExecuteArgs) (string, error) {
+func (m *mockContainerRuntime) StartTask(ctx context.Context, image string, args object.TaskRuntimeArgs) (string, error) {
 	return "mock-container-123", nil
 }
 
-func (m *mockContainerRuntime) GetWorkerStatus(ctx context.Context, containerID string) (object.TaskStatus, error) {
+func (m *mockContainerRuntime) GetStatus(ctx context.Context, containerID string) (object.RuntimeStatus, error) {
 	return object.StatusDone, nil
+}
+
+func (m *mockContainerRuntime) StartWorker(ctx context.Context, image string, args object.WorkerRuntimeArgs) (string, error) {
+	return "mock-container-123", nil
+}
+
+func (m *mockContainerRuntime) Stop(ctx context.Context, id string) error {
+	return nil
+}
+
+func (m *mockContainerRuntime) StopAll(ctx context.Context) error {
+	return nil
 }
 
 func (m *mockContainerRuntime) Close() error {

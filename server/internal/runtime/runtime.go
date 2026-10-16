@@ -2,11 +2,12 @@ package runtime
 
 import (
 	"context"
-	"qall-daemon-server/internal/object"
+
+	"github.com/qall-project/qall-daemon/server/internal/object"
 )
 
 type Runtime interface {
-	CreateImage(ctx context.Context, image string, requirements []string) (string, error)
+	CreateImage(ctx context.Context, targetImageName, baseImageName, qallVersion string, requirements []string) (string, error)
 	StartTask(ctx context.Context, image string, args object.TaskRuntimeArgs) (string, error)
 	GetStatus(ctx context.Context, containerID string) (object.RuntimeStatus, error)
 	StartWorker(ctx context.Context, image string, args object.WorkerRuntimeArgs) (string, error)
