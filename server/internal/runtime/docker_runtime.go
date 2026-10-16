@@ -34,6 +34,7 @@ type DockerRuntime struct {
 	buildGroup        singleflight.Group
 }
 
+const qallBaseImage = "rg.fr-par.scw.cloud/qall-project/qall-base:local"
 const HostSecretsDir = "/dev/shm/qall-secrets"
 const HostDataloadersDir = "/dev/shm/qall-dataloaders"
 const HostSandboxDir = "/tmp/qall/unifs"
@@ -143,37 +144,44 @@ func (d *DockerRuntime) CreateImage(
 			requirements,
 		)
 
+		finalBase := baseImageName
+		if finalBase == "" {
+			finalBase = qallBaseImage
+		}
+
 		var dockerfile strings.Builder
 
-		dockerfile.WriteString(fmt.Sprintf(
-			"FROM %s\n",
-			baseImageName,
-		))
+		dockerfile.WriteString(fmt.Sprintf("FROM %s AS qall-base\n", qallBaseImage))
+		dockerfile.WriteString(fmt.Sprintf("FROM %s\n", finalBase))
 		dockerfile.WriteString("WORKDIR /qall-workspace\n")
+		dockerfile.WriteString("COPY --from=qall-base /root/.local/bin/uv /usr/local/bin/uv\n")
+		dockerfile.WriteString("COPY --from=qall-base /qall-workspace /qall-workspace\n")
 
-		// Install Qall from PyPI.
-		dockerfile.WriteString(
-			"RUN --mount=type=cache,target=/root/.cache/pip " +
-				fmt.Sprintf(
-					"pip install --cache-dir=/root/.cache/pip qall%s\n",
-					qallVersionArg(qallVersion),
-				),
-		)
+		toolInstall := "RUN uv tool install /qall-workspace/qall --python 3.13"
 
-		// Install task/worker-specific requirements.
 		if len(requirements) > 0 {
-			formattedReqs := make([]string, len(requirements))
+			// Strip newlines to prevent basic Dockerfile instruction injection,
+			// then fold each requirement into the tool install as a --with dep,
+			// so per-task packages land in the same interpreter that later runs
+			// `qall task run` (the uv tool venv), not the base image's system
+			// python — otherwise the task subprocess cannot import them.
 
-			for i, req := range requirements {
-				formattedReqs[i] = fmt.Sprintf("%q", req)
+			// Temporary fix to allow the import and use of opencv in an example workflow
+			dockerfile.WriteString("RUN apt-get update && apt-get install -y libgl1 libglib2.0-0 && rm -rf /var/lib/apt/lists/*\n")
+
+			for _, reqGroup := range requirements {
+				safeRequirements := strings.ReplaceAll(reqGroup, "\n", " ")
+				safeRequirements = strings.ReplaceAll(safeRequirements, "\r", "")
+
+				for _, req := range strings.Fields(safeRequirements) {
+					toolInstall += fmt.Sprintf(" --with %s", req)
+				}
 			}
-
-			dockerfile.WriteString(fmt.Sprintf(
-				"RUN --mount=type=cache,target=/root/.cache/pip "+
-					"pip install --cache-dir=/root/.cache/pip %s\n",
-				strings.Join(formattedReqs, " "),
-			))
 		}
+
+		dockerfile.WriteString("RUN uv python install 3.13\n")
+		dockerfile.WriteString(toolInstall + "\n")
+		dockerfile.WriteString("ENV PATH=\"/root/.local/bin:$PATH\"\n")
 
 		buildCtx, err := createTarStream("Dockerfile", dockerfile.String())
 		if err != nil {
@@ -186,19 +194,16 @@ func (d *DockerRuntime) CreateImage(
 			Version: build.BuilderBuildKit,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("failed to trigger image build: %w", err)
+			return nil, err
 		}
 		defer resp.Body.Close()
 
-		// Parse the Docker stream to surface actual build errors (e.g., pip install failures)
+		// Parse the Docker stream to surface actual build errors (e.g., uv install failures)
 		if err := jsonmessage.DisplayJSONMessagesStream(resp.Body, io.Discard, 0, false, nil); err != nil {
 			return nil, fmt.Errorf("docker build failed: %w", err)
 		}
 
-		log.Printf(
-			"[Docker-Build] Image %s built successfully.",
-			imageTag,
-		)
+		log.Printf("[Docker-Build] Image %s built successfully.", imageTag)
 		return nil, nil
 	})
 
@@ -207,16 +212,6 @@ func (d *DockerRuntime) CreateImage(
 	}
 
 	return imageTag, nil
-}
-
-// qallVersionArg returns the pin suffix for `pip install qall`, i.e. `==<version>`
-// when a version is provided and an empty string when it is not.
-func qallVersionArg(qallVersion string) string {
-	if qallVersion == "" {
-		return ""
-	}
-
-	return fmt.Sprintf("==%s", qallVersion)
 }
 
 func (d *DockerRuntime) StartTask(ctx context.Context, imageTag string, args object.TaskRuntimeArgs) (string, error) {
