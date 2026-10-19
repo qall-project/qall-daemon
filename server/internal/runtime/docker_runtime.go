@@ -34,7 +34,6 @@ type DockerRuntime struct {
 	buildGroup        singleflight.Group
 }
 
-const qallBaseImage = "rg.fr-par.scw.cloud/qall-project/qall-base:local"
 const HostSecretsDir = "/dev/shm/qall-secrets"
 const HostDataloadersDir = "/dev/shm/qall-dataloaders"
 const HostSandboxDir = "/tmp/qall/unifs"
@@ -144,20 +143,16 @@ func (d *DockerRuntime) CreateImage(
 			requirements,
 		)
 
-		finalBase := baseImageName
-		if finalBase == "" {
-			finalBase = qallBaseImage
-		}
-
 		var dockerfile strings.Builder
 
-		dockerfile.WriteString(fmt.Sprintf("FROM %s AS qall-base\n", qallBaseImage))
-		dockerfile.WriteString(fmt.Sprintf("FROM %s\n", finalBase))
+		// dockerfile.WriteString(fmt.Sprintf("FROM %s AS qall-base\n", qallBaseImage))
+		dockerfile.WriteString(fmt.Sprintf("FROM %s\n", baseImageName))
 		dockerfile.WriteString("WORKDIR /qall-workspace\n")
-		dockerfile.WriteString("COPY --from=qall-base /root/.local/bin/uv /usr/local/bin/uv\n")
-		dockerfile.WriteString("COPY --from=qall-base /qall-workspace /qall-workspace\n")
+		dockerfile.WriteString("RUN apt-get update && apt-get install -y curl ca-certificates && rm -rf /var/lib/apt/lists/*\n")
+		dockerfile.WriteString("ADD https://astral.sh/uv/install.sh /uv-install.sh\n")
+		dockerfile.WriteString("RUN sh /uv-install.sh && rm /uv-install.sh\n")
 
-		toolInstall := "RUN uv tool install /qall-workspace/qall --python 3.13"
+		toolInstall := "RUN uv tool install /qall-workspace/qall --python 3.13\n"
 
 		if len(requirements) > 0 {
 			// Strip newlines to prevent basic Dockerfile instruction injection,
