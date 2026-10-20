@@ -1,4 +1,4 @@
-FROM golang:1.26-alpine AS builder
+FROM docker-proxy.internal.scaleway.com/golang:1.26-alpine AS builder
 
 RUN apk add --no-cache ca-certificates
 
@@ -21,7 +21,7 @@ RUN CGO_ENABLED=0 \
     ./cmd/start_daemon.go
 
 
-FROM alpine:3.22
+FROM docker-proxy.internal.scaleway.com/alpine:3.22
 
 RUN apk add --no-cache ca-certificates
 

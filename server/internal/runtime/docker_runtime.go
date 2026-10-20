@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -111,12 +112,25 @@ func (d *DockerRuntime) CreateImage(
 	qallVersion string,
 	requirements []string,
 ) (string, error) {
+	qallSource := strings.TrimSpace(os.Getenv("QALL_DEV_DIR"))
+
 	hashInput := fmt.Sprintf(
 		"%s|qall:%s|%s",
 		baseImageName,
 		qallVersion,
 		strings.Join(requirements, "|"),
 	)
+
+	// When a local qall SDK dev dir is configured, its content becomes part of
+	// the image cache key so that any local change triggers a rebuild instead
+	// of silently reusing a stale image built from the previous source.
+	if qallSource != "" {
+		fingerprint, err := hashDirContent(qallSource)
+		if err != nil {
+			return "", fmt.Errorf("failed to fingerprint qall dev dir %q: %w", qallSource, err)
+		}
+		hashInput = fmt.Sprintf("%s|dev:%x", hashInput, fingerprint)
+	}
 
 	hash := sha256.Sum256([]byte(hashInput))
 	imageTag := fmt.Sprintf(
@@ -151,8 +165,27 @@ func (d *DockerRuntime) CreateImage(
 		dockerfile.WriteString("RUN apt-get update && apt-get install -y curl ca-certificates && rm -rf /var/lib/apt/lists/*\n")
 		dockerfile.WriteString("ADD https://astral.sh/uv/install.sh /uv-install.sh\n")
 		dockerfile.WriteString("RUN sh /uv-install.sh && rm /uv-install.sh\n")
+		dockerfile.WriteString("ENV PATH=\"/root/.local/bin:$PATH\"\n")
 
-		toolInstall := "RUN uv tool install /qall-workspace/qall --python 3.13\n"
+		toolInstall := ""
+
+		if qallSource != "" {
+			log.Printf(
+				"[Docker-Build] Installing qall from local dev dir %s",
+				qallSource,
+			)
+			dockerfile.WriteString("COPY qall /qall-workspace/qall\n")
+			toolInstall = "RUN uv tool install /qall-workspace/qall --python 3.13"
+		} else {
+			log.Printf(
+				"[Docker-Build] Installing qall%s from PyPI",
+				qallVersionArg(qallVersion),
+			)
+			toolInstall = fmt.Sprintf(
+				"RUN uv tool install qall%s --python 3.13",
+				qallVersionArg(qallVersion),
+			)
+		}
 
 		if len(requirements) > 0 {
 			// Strip newlines to prevent basic Dockerfile instruction injection,
@@ -176,9 +209,8 @@ func (d *DockerRuntime) CreateImage(
 
 		dockerfile.WriteString("RUN uv python install 3.13\n")
 		dockerfile.WriteString(toolInstall + "\n")
-		dockerfile.WriteString("ENV PATH=\"/root/.local/bin:$PATH\"\n")
 
-		buildCtx, err := createTarStream("Dockerfile", dockerfile.String())
+		buildCtx, err := createBuildContext(dockerfile.String(), qallSource)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create build context: %w", err)
 		}
@@ -513,14 +545,18 @@ func (d *DockerRuntime) Close() error {
 	return d.client.Close()
 }
 
-func createTarStream(filename string, content string) (io.Reader, error) {
+// createBuildContext produces the tar stream handed to the Docker build API.
+// It always contains the Dockerfile and, when a local qall SDK dev dir is
+// configured, also the SDK sources rooted at `qall/` in the context so the
+// generated Dockerfile can `COPY qall /qall-workspace/qall`.
+func createBuildContext(dockerfile string, devDir string) (io.Reader, error) {
 	var buf bytes.Buffer
 	tw := tar.NewWriter(&buf)
 
 	hdr := &tar.Header{
-		Name:    filename,
+		Name:    "Dockerfile",
 		Mode:    0644,
-		Size:    int64(len(content)),
+		Size:    int64(len(dockerfile)),
 		ModTime: time.Now(),
 	}
 
@@ -528,8 +564,14 @@ func createTarStream(filename string, content string) (io.Reader, error) {
 		return nil, err
 	}
 
-	if _, err := tw.Write([]byte(content)); err != nil {
+	if _, err := tw.Write([]byte(dockerfile)); err != nil {
 		return nil, err
+	}
+
+	if devDir != "" {
+		if err := addDirToTar(tw, devDir, "qall"); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := tw.Close(); err != nil {
@@ -537,6 +579,133 @@ func createTarStream(filename string, content string) (io.Reader, error) {
 	}
 
 	return &buf, nil
+}
+
+// addDirToTar recursively writes the files of dir into tw, prefixing every
+// entry with prefix. Noise (VCS metadata, caches, bytecode) is skipped.
+func addDirToTar(tw *tar.Writer, dir string, prefix string) error {
+	return filepath.WalkDir(dir, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		rel, err := filepath.Rel(dir, path)
+		if err != nil {
+			return err
+		}
+
+		if rel == "." {
+			return nil
+		}
+
+		if entry.IsDir() {
+			if shouldSkipDevPath(rel) {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		if !entry.Type().IsRegular() || shouldSkipDevPath(rel) {
+			return nil
+		}
+
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+
+		info, err := entry.Info()
+		if err != nil {
+			return err
+		}
+
+		hdr := &tar.Header{
+			Name:    filepath.ToSlash(filepath.Join(prefix, rel)),
+			Mode:    int64(info.Mode().Perm()),
+			Size:    int64(len(data)),
+			ModTime: info.ModTime(),
+		}
+
+		if err := tw.WriteHeader(hdr); err != nil {
+			return err
+		}
+
+		_, err = tw.Write(data)
+		return err
+	})
+}
+
+// shouldSkipDevPath reports whether a path inside the local qall SDK dev dir
+// should be excluded from the build context and cache fingerprint (VCS
+// metadata, virtualenvs, caches and compiled bytecode).
+func shouldSkipDevPath(rel string) bool {
+	name := filepath.Base(rel)
+
+	switch name {
+	case ".git", ".venv", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache":
+		return true
+	}
+
+	return strings.HasSuffix(name, ".pyc")
+}
+
+// hashDirContent returns a stable sha256 over the paths and contents of every
+// regular file in dir (excluding build-noise directories), so any local change
+// to the qall SDK yields a new fingerprint and thus a new runtime image tag.
+func hashDirContent(dir string) ([]byte, error) {
+	h := sha256.New()
+
+	err := filepath.WalkDir(dir, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		rel, err := filepath.Rel(dir, path)
+		if err != nil {
+			return err
+		}
+
+		if rel == "." {
+			return nil
+		}
+
+		if entry.IsDir() {
+			if shouldSkipDevPath(rel) {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		if !entry.Type().IsRegular() || shouldSkipDevPath(rel) {
+			return nil
+		}
+
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+
+		h.Write([]byte(rel))
+		h.Write([]byte{0})
+		h.Write(data)
+		h.Write([]byte{0})
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return h.Sum(nil), nil
+}
+
+// qallVersionArg returns the version pin suffix for installing `qall`, i.e.
+// `==<version>` when a version is provided and an empty string when it is not.
+func qallVersionArg(qallVersion string) string {
+	if qallVersion == "" {
+		return ""
+	}
+
+	return fmt.Sprintf("==%s", qallVersion)
 }
 
 // dataloadersFileSources returns the host directories backing the `file://`

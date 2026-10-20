@@ -1,19 +1,18 @@
-.PHONY: help clean-containers clean-all build-base build-daemon build reset
+.PHONY: help clean-containers clean-all build-daemon build reset
 
 # Variables
-IMAGE_DAEMON := scw/qall-daemon
+IMAGE_DAEMON := scw/qall-daemon-server
 TAG_DAEMON := latest
 
 DOCKERFILE_DAEMON := docker/qall-daemon.Dockerfile
 
-# MAKEFLAGS += -j2
 
 # Default target
 help:
 	@echo "Available commands:"
 	@echo "  make clean-containers  - Stop qall-tasks, stop qall-workers, prune containers, remove qall-task images"
 	@echo "  make clean-all      - Stop ALL containers, prune, remove base & daemon images"
-	@echo "  make build          - Build base and daemon images"
+	@echo "  make build          - Build daemon image. Alias of build-daemon"
 	@echo "  make reset          - Full reset: clean-all followed by build"
 
 # Regular Clean
@@ -32,7 +31,7 @@ clean-containers:
 	@images=$$(docker images -q "qall-task"); \
 	if [ -n "$$images" ]; then docker image rm -f $$images; else echo "  -> No qall-task images found."; fi
 
-	@echo "Removing qall-task images..."
+	@echo "Removing qall-worker images..."
 	@images=$$(docker images -q "qall-worker"); \
 	if [ -n "$$images" ]; then docker image rm -f $$images; else echo "  -> No qall-worker images found."; fi
 
@@ -53,7 +52,7 @@ build-daemon:
 	@echo "Building $(IMAGE_DAEMON):$(TAG_DAEMON)..."
 	docker build --no-cache -t $(IMAGE_DAEMON):$(TAG_DAEMON) -f $(DOCKERFILE_DAEMON) .
 
-build: build-base build-daemon
+build: build-daemon
 	docker images
 
 # Full Reset
