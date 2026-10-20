@@ -151,6 +151,7 @@ func (d *DockerRuntime) CreateImage(
 		dockerfile.WriteString("RUN apt-get update && apt-get install -y curl ca-certificates && rm -rf /var/lib/apt/lists/*\n")
 		dockerfile.WriteString("ADD https://astral.sh/uv/install.sh /uv-install.sh\n")
 		dockerfile.WriteString("RUN sh /uv-install.sh && rm /uv-install.sh\n")
+		dockerfile.WriteString("ENV PATH=\"/root/.local/bin:$PATH\"\n")
 
 		toolInstall := "RUN uv tool install /qall-workspace/qall --python 3.13\n"
 
@@ -176,7 +177,6 @@ func (d *DockerRuntime) CreateImage(
 
 		dockerfile.WriteString("RUN uv python install 3.13\n")
 		dockerfile.WriteString(toolInstall + "\n")
-		dockerfile.WriteString("ENV PATH=\"/root/.local/bin:$PATH\"\n")
 
 		buildCtx, err := createTarStream("Dockerfile", dockerfile.String())
 		if err != nil {

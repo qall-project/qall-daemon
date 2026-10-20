@@ -47,15 +47,11 @@ class GrpcDaemonClient(DaemonClient):
         self,
         url: str = "localhost:50053",
         token: Optional[str] = None,
-        local_unified_fs: str = "/tmp/qall/unifs",
     ):
         self.__url = url
         self.__channel: Optional[grpc.Channel] = None
         self.__stub: Optional[pb2_grpc.ApiStub] = None
         self.__token = token
-        self.__unifs = Path(local_unified_fs)
-
-        self.__unifs.mkdir(mode=0o777, parents=True, exist_ok=True)
 
     def __enter__(self):
         self.connect()
