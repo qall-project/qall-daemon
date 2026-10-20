@@ -6,7 +6,7 @@ import (
 )
 
 func newRemoteStorage() (*StorageCollection, error) {
-	log.Printf("[REMOTE MODE] Blocks (RO): %s | Remote Registry: %s", BlockRegistryDir)
+	log.Printf("[REMOTE MODE] Blocks (RO): %s", BlockRegistryDir)
 
 	return nil, fmt.Errorf("remote mode is not fully implemented yet")
 }

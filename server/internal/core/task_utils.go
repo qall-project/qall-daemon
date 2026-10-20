@@ -318,8 +318,8 @@ func (e *DaemonCore) buildProviderEnvVars(providerName string, envs map[string]s
 		envVars[fmt.Sprintf("QALL_PROVIDER_%s", normalizedKey)] = value
 
 		if cleanProvider != "" {
-			envVars[fmt.Sprintf("%s_%s=%s", cleanProvider, normalizedKey)] = value
-			envVars[fmt.Sprintf("QALL_PROVIDER_%s_%s=%s", cleanProvider, normalizedKey)] = value
+			envVars[fmt.Sprintf("%s_%s", cleanProvider, normalizedKey)] = value
+			envVars[fmt.Sprintf("QALL_PROVIDER_%s_%s", cleanProvider, normalizedKey)] = value
 		}
 	}
 

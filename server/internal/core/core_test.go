@@ -54,13 +54,13 @@ func (m *mockBlockStore) Get(ctx context.Context, hash string) ([]byte, error) {
 
 type mockMetaStore struct {
 	dsObj.MetadataStore
-	savedMetas []dsObj.ArtifactMeta
-	listMetas  []dsObj.ArtifactMeta
+	savedMetas []object.ArtifactMeta
+	listMetas  []object.ArtifactMeta
 	saveErr    error
 	listErr    error
 }
 
-func (m *mockMetaStore) SaveArtifactMeta(ctx context.Context, meta dsObj.ArtifactMeta) error {
+func (m *mockMetaStore) CreateArtifactMeta(ctx context.Context, meta object.ArtifactMeta) error {
 	if m.saveErr != nil {
 		return m.saveErr
 	}
@@ -68,12 +68,12 @@ func (m *mockMetaStore) SaveArtifactMeta(ctx context.Context, meta dsObj.Artifac
 	return nil
 }
 
-func (m *mockMetaStore) ListArtifactsByTask(ctx context.Context, taskRunID string) ([]dsObj.ArtifactMeta, error) {
+func (m *mockMetaStore) ListArtifactsByTask(ctx context.Context, taskRunID string) ([]object.ArtifactMeta, error) {
 	if m.listErr != nil {
 		return nil, m.listErr
 	}
 
-	var filtered []dsObj.ArtifactMeta
+	var filtered []object.ArtifactMeta
 	for _, meta := range m.listMetas {
 		if meta.TaskRunID == taskRunID {
 			filtered = append(filtered, meta)
@@ -113,10 +113,13 @@ func (m *mockContainerRuntime) Close() error {
 }
 
 func TestEngine_RunTask_TaskHashEmpty(t *testing.T) {
-	engine := NewDaemonCore(nil, "/fake/dir", nil, nil, &mockContainerRuntime{})
+	engine, err := NewDaemonCore(nil, "/fake/dir", nil, nil, &mockContainerRuntime{})
+	if err != nil {
+		t.Fatalf("Error while creating daemon engine: %v", err)
+	}
 	ctx := context.Background()
 
-	_, err := engine.RunTask(ctx, "", "artifact-hash")
+	_, err = engine.RunTask(ctx, "", "artifact-hash", map[string]string{})
 	if err == nil || err.Error() != "TaskHash can't be empty" {
 		t.Fatalf("Expected 'TaskHash can't be empty' error, got: %v", err)
 	}
@@ -172,7 +175,10 @@ func TestEngine_CreateArtifact(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockBS := newMockBlockStore()
 			mockMeta := &mockMetaStore{}
-			engine := NewDaemonCore(nil, "", mockMeta, mockBS, &mockContainerRuntime{})
+			engine, err := NewDaemonCore(nil, "", mockMeta, mockBS, &mockContainerRuntime{})
+			if err != nil {
+				t.Fatalf("Error while creating daemon engine: %v", err)
+			}
 
 			req := object.ArtifactRequest{Payload: tt.payload, TaskRunId: tt.taskRunId}
 			artifact, err := engine.CreateArtifact(ctx, req, tt.auth)
@@ -209,7 +215,11 @@ func TestEngine_CreateArtifact(t *testing.T) {
 
 func TestEngine_GetArtifact(t *testing.T) {
 	mockBS := newMockBlockStore()
-	engine := NewDaemonCore(nil, "", nil, mockBS, &mockContainerRuntime{})
+	engine, err := NewDaemonCore(nil, "", nil, mockBS, &mockContainerRuntime{})
+	if err != nil {
+		t.Fatalf("Error while creating daemon engine: %v", err)
+	}
+
 	ctx := context.Background()
 
 	hash := "some-hash"
@@ -259,10 +269,14 @@ func TestEngine_GetArtifact(t *testing.T) {
 
 func TestEngine_ListArtifacts(t *testing.T) {
 	mockMeta := &mockMetaStore{}
-	engine := NewDaemonCore(nil, "", mockMeta, nil, &mockContainerRuntime{})
+	engine, err := NewDaemonCore(nil, "", mockMeta, nil, &mockContainerRuntime{})
+	if err != nil {
+		t.Fatalf("Error while creating daemon engine: %v", err)
+	}
+
 	ctx := context.Background()
 
-	mockMeta.listMetas = []dsObj.ArtifactMeta{
+	mockMeta.listMetas = []object.ArtifactMeta{
 		{Hash: "hash-1", TaskRunID: "task-abc"},
 		{Hash: "hash-2", TaskRunID: "task-abc"},
 	}
