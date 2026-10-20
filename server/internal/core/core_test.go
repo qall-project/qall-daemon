@@ -219,7 +219,7 @@ func TestEngine_GetArtifact(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error while creating daemon engine: %v", err)
 	}
-	
+
 	ctx := context.Background()
 
 	hash := "some-hash"
@@ -273,7 +273,7 @@ func TestEngine_ListArtifacts(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error while creating daemon engine: %v", err)
 	}
-	
+
 	ctx := context.Background()
 
 	mockMeta.listMetas = []object.ArtifactMeta{
