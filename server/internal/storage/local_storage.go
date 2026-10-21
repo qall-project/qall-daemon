@@ -3,6 +3,7 @@ package storage
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/qall-project/qall-daemon/server/internal/datastore"
 	"github.com/qall-project/qall-daemon/server/internal/registry"
@@ -12,8 +13,14 @@ import (
 	ds "github.com/qall-project/qall-registry/server/pkg/datastores/local"
 )
 
-func newLocalStorage() (*StorageCollection, error) {
-	log.Printf("[LOCAL MODE] Blocks (RO): %s | Artifacts & DB (RW): %s", BlockRegistryDir, artifactRegistryDir)
+func newLocalStorage(blockRegistryDir string, artifactRegistryDir string) (*StorageCollection, error) {
+	log.Printf("[LOCAL MODE] Blocks (RO): %s | Artifacts & DB (RW): %s", blockRegistryDir, artifactRegistryDir)
+
+	for _, dir := range []string{blockRegistryDir, artifactRegistryDir} {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return nil, fmt.Errorf("failed to create storage directory %q: %w", dir, err)
+		}
+	}
 
 	// Init SQLite DB for tasks and artifacts metadata
 	metaStore, err := datastore.NewSQLiteStore(artifactRegistryDir)
@@ -29,13 +36,13 @@ func newLocalStorage() (*StorageCollection, error) {
 	}
 
 	// Init task registry
-	blockStore, err := bs.NewLocalBlockStore(BlockRegistryDir)
+	blockStore, err := bs.NewLocalBlockStore(blockRegistryDir)
 	if err != nil {
 		metaStore.Close()
 		return nil, fmt.Errorf("registry block store error: %w", err)
 	}
 
-	dataStore, err := ds.NewLocalDataStore(BlockRegistryDir)
+	dataStore, err := ds.NewLocalDataStore(blockRegistryDir)
 	if err != nil {
 		metaStore.Close()
 		return nil, fmt.Errorf("registry data store error: %w", err)

@@ -28,18 +28,23 @@ import (
 	"github.com/qall-project/qall-daemon/server/internal/object"
 )
 
+type Options struct {
+	DaemonAddr string
+	DaemonGrpcPort string
+}
+
 type DockerRuntime struct {
-	client            *client.Client
-	daemonContainerID string
-	networkName       string
-	buildGroup        singleflight.Group
+	client      *client.Client
+	daemonAddr  string // full "host:port" endpoint used by task/worker containers
+	networkName string
+	buildGroup  singleflight.Group
 }
 
 const HostSecretsDir = "/dev/shm/qall-secrets"
 const HostDataloadersDir = "/dev/shm/qall-dataloaders"
 const HostSandboxDir = "/tmp/qall/unifs"
 
-func NewDockerRuntime(ctx context.Context) (*DockerRuntime, error) {
+func NewDockerRuntime(ctx context.Context, opts Options) (*DockerRuntime, error) {
 	cli, err := client.New(client.FromEnv)
 
 	if err != nil {
@@ -80,29 +85,83 @@ func NewDockerRuntime(ctx context.Context) (*DockerRuntime, error) {
 		log.Printf("docker network %s is already up.\n", networkName)
 	}
 
-	daemonContainerID, err := os.Hostname()
+	daemonAddr, containerized, err := resolveDaemonAddr(ctx, cli, networkID, opts.DaemonAddr)
 
 	if err != nil {
 		cli.Close()
-		return nil, fmt.Errorf("couldn't find hostname: %w", err)
+		return nil, fmt.Errorf("failed to resolve daemon address: %w", err)
 	}
 
-	log.Printf("[Network] Connecting daemon (ID: %s) to the network %s...\n", daemonContainerID, networkName)
-	_, err = cli.NetworkConnect(ctx, networkID, client.NetworkConnectOptions{
-		Container:      daemonContainerID,
-		EndpointConfig: &network.EndpointSettings{},
-	})
+	if containerized {
+		log.Printf("[Network] Connecting daemon (ID: %s) to the network %s...\n", daemonAddr, networkName)
+		_, err = cli.NetworkConnect(ctx, networkID, client.NetworkConnectOptions{
+			Container:      daemonAddr,
+			EndpointConfig: &network.EndpointSettings{},
+		})
 
-	if err != nil && !strings.Contains(err.Error(), "already exists") {
-		cli.Close()
-		return nil, fmt.Errorf("error while connecting: %w", err)
+		if err != nil && !strings.Contains(err.Error(), "already exists") {
+			cli.Close()
+			return nil, fmt.Errorf("error while connecting: %w", err)
+		}
+	}
+
+	grpcPort := opts.DaemonGrpcPort
+	if grpcPort == "" {
+		grpcPort = "50053"
 	}
 
 	return &DockerRuntime{
-		client:            cli,
-		daemonContainerID: daemonContainerID,
-		networkName:       networkName,
+		client:      cli,
+		daemonAddr:  fmt.Sprintf("%s:%s", daemonAddr, grpcPort),
+		networkName: networkName,
 	}, nil
+}
+
+// resolveDaemonAddr determines the address task/worker containers should use to reach the daemon
+func resolveDaemonAddr(ctx context.Context, cli *client.Client, networkID string, daemonAddr string) (addr string, containerized bool, err error) {
+	// if daemonAddr is set, overrides
+	if daemonAddr != "" {
+		return daemonAddr, false, nil
+	}
+
+	hostname, err := os.Hostname()
+
+	if err != nil {
+		return "", false, fmt.Errorf("couldn't find hostname: %w", err)
+	}
+
+	if _, inspectErr := cli.ContainerInspect(ctx, hostname, client.ContainerInspectOptions{}); inspectErr == nil {
+		log.Printf("[Network] Daemon is containerized (ID: %s).", hostname)
+		return hostname, true, nil
+	} else if !errdefs.IsNotFound(inspectErr) {
+		return "", false, fmt.Errorf("failed to inspect own container %q: %w", hostname, inspectErr)
+	}
+
+	// Native host execution: resolve the gateway IP of the bridge network.
+	netw, err := cli.NetworkInspect(ctx, networkID, client.NetworkInspectOptions{})
+	if err != nil {
+		return "", false, fmt.Errorf("failed to inspect network %s: %w", networkID, err)
+	}
+
+	gateway, err := bridgeGatewayIP(&netw.Network)
+	if err != nil {
+		return "", false, fmt.Errorf("could not determine gateway IP of network %s: %w", networkID, err)
+	}
+
+	log.Printf("[Network] Daemon runs natively; task/worker containers will reach it via bridge gateway %s", gateway)
+
+	return gateway, false, nil
+}
+
+// bridgeGatewayIP returns the first configured gateway of a docker network
+func bridgeGatewayIP(netw *network.Inspect) (string, error) {
+	for _, ipam := range netw.IPAM.Config {
+		if ipam.Gateway.IsValid() {
+			return ipam.Gateway.String(), nil
+		}
+	}
+
+	return "", fmt.Errorf("no gateway configured")
 }
 
 func (d *DockerRuntime) CreateImage(
@@ -327,24 +386,13 @@ func (d *DockerRuntime) StartTask(ctx context.Context, imageTag string, args obj
 		cmd = append(cmd, "--worker-address", wa)
 	}
 
-	// 	envVariables := []string{
-	// 	"PYTHONUNBUFFERED=1",
-	// 	fmt.Sprintf("QALL_TOKEN_PATH=%s", workerTokenPath),
-	// 	fmt.Sprintf("QALL_DAEMON_ADDRESS=%s:50053", d.daemonContainerID),
-	// }
-
-	// if args.EnvironmentVariables != nil {
-	// 	for key, value := range args.EnvironmentVariables {
-	// 		envVariables = append(envVariables, fmt.Sprintf("%s=%s", key, value))
-	// 	}
-	// }
 	resp, err := d.client.ContainerCreate(ctx, client.ContainerCreateOptions{
 		Name: args.Name,
 		Config: &container.Config{
 			Image: imageTag,
 			Env: []string{
 				"PYTHONUNBUFFERED=1",
-				fmt.Sprintf("QALL_DAEMON_ADDRESS=%s:50053", d.daemonContainerID),
+				fmt.Sprintf("QALL_DAEMON_ADDRESS=%s", d.daemonAddr),
 				fmt.Sprintf("QALL_TOKEN_PATH=%s", workerTokenPath),
 			},
 			Cmd: cmd,
@@ -424,7 +472,7 @@ func (d *DockerRuntime) StartWorker(ctx context.Context, imageTag string, args o
 				"PYTHONUNBUFFERED=1",
 				fmt.Sprintf("TASK_RUN_ID=%s", args.TaskRunId),
 				fmt.Sprintf("QALL_TOKEN_PATH=%s", workerTokenPath),
-				fmt.Sprintf("QALL_DAEMON_ADDRESS=%s:50053", d.daemonContainerID),
+				fmt.Sprintf("QALL_DAEMON_ADDRESS=%s", d.daemonAddr),
 			},
 			Cmd: cmd,
 		},
