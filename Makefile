@@ -1,7 +1,7 @@
 .PHONY: help clean-containers clean-all build-daemon build reset
 
 # Variables
-IMAGE_DAEMON := scw/qall-daemon-server
+IMAGE_DAEMON := scw/qall-daemon
 TAG_DAEMON := latest
 
 DOCKERFILE_DAEMON := docker/qall-daemon.Dockerfile

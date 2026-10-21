@@ -16,3 +16,4 @@ from .artifact import Artifact
 from .daemon import DaemonInfo
 from .task_run import TaskRun, TaskRunStatus
 from .worker_entry import WorkerEntry
+from .resource_assignment import ResourceAssignment

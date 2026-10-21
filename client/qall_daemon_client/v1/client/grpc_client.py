@@ -33,6 +33,7 @@ from qall_daemon_client.v1.objects import (
     TaskRun,
     TaskRunStatus,
     WorkerEntry,
+    ResourceAssignment,
 )
 
 from .base import DaemonClient
@@ -98,7 +99,7 @@ class GrpcDaemonClient(DaemonClient):
     ) -> WorkerEntry:
         request = pb2.CreateWorkerEntryRequest(
             worker_hash=worker_hash,
-            provider=worker_provider,
+            worker_provider=worker_provider,
             input_format=input_format,
         )
 
