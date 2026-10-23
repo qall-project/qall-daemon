@@ -304,7 +304,7 @@ func (e *DaemonCore) buildProviderEnvVars(providerName string, envs map[string]s
 	envVars := make(map[string]string)
 	cleanProvider := strings.ToUpper(strings.TrimSpace(providerName))
 
-	envVars["QALL_PROVIDER"] = cleanProvider
+	envVars["QALL_PROVIDER_NAME"] = cleanProvider
 
 	for rawKey, value := range envs {
 		trimmedKey := strings.TrimSpace(rawKey)
@@ -316,11 +316,6 @@ func (e *DaemonCore) buildProviderEnvVars(providerName string, envs map[string]s
 		normalizedKey := strings.ToUpper(strings.ReplaceAll(trimmedKey, "-", "_"))
 
 		envVars[fmt.Sprintf("QALL_PROVIDER_%s", normalizedKey)] = value
-
-		if cleanProvider != "" {
-			envVars[fmt.Sprintf("%s_%s", cleanProvider, normalizedKey)] = value
-			envVars[fmt.Sprintf("QALL_PROVIDER_%s_%s", cleanProvider, normalizedKey)] = value
-		}
 	}
 
 	return envVars

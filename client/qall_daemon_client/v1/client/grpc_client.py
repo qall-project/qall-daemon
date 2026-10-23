@@ -80,9 +80,9 @@ class GrpcDaemonClient(DaemonClient):
     def create_resource_assignment(
         self, task_hash: str, resource_provider: str, resource_name: str
     ) -> ResourceAssignment:
-        request = pb2.CreateWorkerEntryRequest(
+        request = pb2.CreateResourceAssignmentRequest(
             task_hash=task_hash,
-            provider=resource_provider,
+            resource_provider=resource_provider,
             resource_name=resource_name,
         )
 

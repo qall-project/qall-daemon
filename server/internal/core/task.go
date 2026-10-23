@@ -54,6 +54,10 @@ func (e *DaemonCore) RunTask(
 	resourceName := "local"
 	assignment, exists := e.resourceAssignments[taskHash]
 
+	if providerCredentials == nil {
+		providerCredentials = make(map[string]string)
+	}
+
 	if exists {
 		providerName = assignment.ResourceProvider
 		resourceName = assignment.ResourceName
