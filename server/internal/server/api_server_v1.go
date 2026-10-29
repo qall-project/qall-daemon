@@ -29,7 +29,7 @@ func (s *ApiV1Server) GetServiceInfo(ctx context.Context, in *emptypb.Empty) (*p
 }
 
 func (s *ApiV1Server) CreateWorkerEntry(ctx context.Context, req *pbDaemon.CreateWorkerEntryRequest) (*pbDaemon.WorkerEntry, error) {
-	log.Println("Request received: CreateWorkerEntry")
+	log.Println("Request received: CreateWorkerEntry:", req.GetWorkerProvider(), req.GetInputFormat())
 
 	wk, err := s.core.CreateWorkerEntry(ctx, req.GetWorkerProvider(), req.GetWorkerHash(), req.GetInputFormat())
 
@@ -45,7 +45,7 @@ func (s *ApiV1Server) CreateWorkerEntry(ctx context.Context, req *pbDaemon.Creat
 }
 
 func (s *ApiV1Server) CreateResourceAssignment(ctx context.Context, req *pbDaemon.CreateResourceAssignmentRequest) (*pbDaemon.ResourceAssignment, error) {
-	log.Println("Request received: CreateResourceAssignment")
+	log.Println("Request received: CreateResourceAssignment:", req.GetResourceProvider(), req.GetResourceName())
 
 	ra, err := s.core.CreateResourceAssignment(ctx, req.GetResourceProvider(), req.GetTaskHash(), req.GetResourceName())
 
