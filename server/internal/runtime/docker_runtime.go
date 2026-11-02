@@ -35,8 +35,8 @@ type DockerRuntime struct {
 	buildGroup        singleflight.Group
 }
 
-const HostSecretsDir = "/dev/shm/qall-secrets"
-const HostDataloadersDir = "/dev/shm/qall-dataloaders"
+const HostSecretsDir = "/tmp/qall-secrets"
+const HostDataloadersDir = "/tmp/qall-dataloaders"
 const HostSandboxDir = "/tmp/qall/unifs"
 
 func NewDockerRuntime(ctx context.Context) (*DockerRuntime, error) {
@@ -285,8 +285,8 @@ func (d *DockerRuntime) StartTask(ctx context.Context, imageTag string, args obj
 	// content. The daemon must NOT create the directory (running as root it
 	// would take ownership away from the unprivileged client), so the mount is
 	// added only when the client has already provisioned it. Note it is a
-	// top-level /dev/shm path, deliberately separate from the root-owned token
-	// dir (/dev/shm/qall-secrets).
+	// top-level /tmp path, deliberately separate from the root-owned token
+	// dir (/tmp/qall-secrets).
 	if _, err := os.Stat(HostDataloadersDir); err == nil {
 		mounts = append(mounts, mount.Mount{
 			Type:     mount.TypeBind,
@@ -717,7 +717,7 @@ func qallVersionArg(qallVersion string) string {
 // dataloader sources referenced by the given task, so the daemon can
 // bind-mount them read-only into the task container. It reads only the `src`
 // fields of the task's provisioned secrets file
-// (`/dev/shm/qall-dataloaders/<task_hash>.json`, mounted into the daemon
+// (`/tmp/qall-dataloaders/<task_hash>.json`, mounted into the daemon
 // container) and never touches the credential content. Object-storage sources
 // and unparseable/missing files yield no mounts.
 func dataloadersFileSources(taskHash string) []string {
