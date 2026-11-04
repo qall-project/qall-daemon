@@ -29,7 +29,7 @@ import (
 )
 
 type Options struct {
-	DaemonAddr string
+	DaemonAddr     string
 	DaemonGrpcPort string
 }
 
