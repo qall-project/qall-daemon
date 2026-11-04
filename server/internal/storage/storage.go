@@ -14,15 +14,9 @@ type StorageCollection struct {
 	Close              func()
 }
 
-const (
-	BlockRegistryDir    = "/block-registry"
-	artifactRegistryDir = "/artifact-registry"
-)
-
-func NewStorage(isLocal bool) (*StorageCollection, error) {
+func NewStorage(isLocal bool, blockRegistryDir string, artifactRegistryDir string) (*StorageCollection, error) {
 	if isLocal {
-		return newLocalStorage()
+		return newLocalStorage(blockRegistryDir, artifactRegistryDir)
 	}
-
-	return newRemoteStorage()
+	return newRemoteStorage(blockRegistryDir)
 }
