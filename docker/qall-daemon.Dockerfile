@@ -4,7 +4,6 @@ RUN apk add --no-cache ca-certificates
 
 WORKDIR /build
 
-# Dependencies first for better layer caching
 COPY server/go.mod server/go.sum ./
 RUN go mod download
 

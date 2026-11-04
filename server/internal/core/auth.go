@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-var hostSecretsDir = "/dev/shm/qall-secrets"
+var hostSecretsDir = "/tmp/qall-secrets"
 
 func (e *DaemonCore) AuthTask(ctx context.Context, taskRunId string) (bool, error) {
 	if taskRunId == "" {
