@@ -464,19 +464,6 @@ func (d *DockerRuntime) StartWorker(ctx context.Context, imageTag string, args o
 
 	containerName := args.Name
 
-	envVariables := []string{
-		"PYTHONUNBUFFERED=1",
-		fmt.Sprintf("TASK_RUN_ID=%s", args.TaskRunId),
-		fmt.Sprintf("QALL_TOKEN_PATH=%s", workerTokenPath),
-		fmt.Sprintf("QALL_DAEMON_ADDRESS=%s:50053", d.daemonContainerID),
-	}
-
-	if args.EnvironmentVariables != nil {
-		for key, value := range args.EnvironmentVariables {
-			envVariables = append(envVariables, fmt.Sprintf("%s=%s", key, value))
-		}
-	}
-
 	resp, err := d.client.ContainerCreate(ctx, client.ContainerCreateOptions{
 		Name: containerName,
 		Config: &container.Config{
