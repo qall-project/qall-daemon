@@ -55,7 +55,12 @@ class CreateResourceAssignmentRequest(_message.Message):
     ) -> None: ...
 
 class CreateTaskRunRequest(_message.Message):
-    __slots__ = ("task_hash", "artifact_hash", "provider_credentials", "workflow_run_id")
+    __slots__ = (
+        "task_hash",
+        "artifact_hash",
+        "provider_credentials",
+        "workflow_run_id",
+    )
 
     class ProviderCredentialsEntry(_message.Message):
         __slots__ = ("key", "value")
