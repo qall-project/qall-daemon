@@ -119,9 +119,22 @@ func TestEngine_RunTask_TaskHashEmpty(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	_, err = engine.RunTask(ctx, "", "artifact-hash", map[string]string{})
+	_, err = engine.RunTask(ctx, "", "artifact-hash", map[string]string{}, "")
 	if err == nil || err.Error() != "TaskHash can't be empty" {
 		t.Fatalf("Expected 'TaskHash can't be empty' error, got: %v", err)
+	}
+}
+
+func TestEngine_RunTask_WorkflowRunIdEmpty(t *testing.T) {
+	engine, err := NewDaemonCore(nil, "/fake/dir", nil, nil, &mockContainerRuntime{})
+	if err != nil {
+		t.Fatalf("Error while creating daemon engine: %v", err)
+	}
+	ctx := context.Background()
+
+	_, err = engine.RunTask(ctx, "hash", "artifact-hash", map[string]string{}, "")
+	if err == nil || err.Error() != "WorkflowRunId can't be empty: the daemon scopes each task's shared filesystem (/workdir) per workflow run, so a run identifier is mandatory" {
+		t.Fatalf("Expected workflow run id error, got: %v", err)
 	}
 }
 

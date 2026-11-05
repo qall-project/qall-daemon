@@ -67,7 +67,11 @@ func (s *ApiV1Server) CreateTaskRun(ctx context.Context, req *pbDaemon.CreateTas
 		return nil, status.Error(codes.InvalidArgument, "task_hash cannot be empty")
 	}
 
-	taskRun, err := s.core.RunTask(ctx, req.GetTaskHash(), req.GetArtifactHash(), req.GetProviderCredentials())
+	if req.GetWorkflowRunId() == "" {
+		return nil, status.Error(codes.InvalidArgument, "workflow_run_id cannot be empty: the daemon scopes each task's shared filesystem (/workdir) per workflow run")
+	}
+
+	taskRun, err := s.core.RunTask(ctx, req.GetTaskHash(), req.GetArtifactHash(), req.GetProviderCredentials(), req.GetWorkflowRunId())
 
 	if err != nil {
 		return nil, err

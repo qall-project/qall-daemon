@@ -114,13 +114,24 @@ class GrpcDaemonClient(DaemonClient):
     def create_task_run(
         self,
         task_hash: str,
+        workflow_run_id: str,
         artifact_hash: Optional[str] = None,
         provider_credentials: Optional[dict] = None,
     ) -> TaskRun:
+        if not workflow_run_id:
+            raise ValueError(
+                "workflow_run_id is required: the daemon scopes each task's "
+                "shared filesystem (/workdir) per workflow run, so a run "
+                "identifier must be provided."
+            )
+        if not task_hash:
+            raise ValueError("task_hash is required")
+
         request = pb2.CreateTaskRunRequest(
             task_hash=task_hash,
             artifact_hash=artifact_hash or "",
             provider_credentials=provider_credentials or {},
+            workflow_run_id=workflow_run_id,
         )
         response = self.__stub.CreateTaskRun(request)
 
