@@ -81,6 +81,10 @@ message CreateTaskRunRequest {
   string task_hash = 1;
   string artifact_hash = 2;
   map<string, string> provider_credentials = 3;
+  // Identifier of the workflow run this task belongs to. It is mandatory: the
+  // daemon scopes the task's shared filesystem (/workdir) under
+  // /tmp/qall/unifs/<workflow_run_id> and rejects requests that omit it.
+  string workflow_run_id = 4;
 }
 
 message TaskRun {

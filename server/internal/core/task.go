@@ -18,9 +18,14 @@ func (e *DaemonCore) RunTask(
 	taskHash string,
 	artifactHash string,
 	providerCredentials map[string]string,
+	workflowRunId string,
 ) (*object.TaskRun, error) {
 	if taskHash == "" {
 		return nil, fmt.Errorf("TaskHash can't be empty")
+	}
+
+	if workflowRunId == "" {
+		return nil, fmt.Errorf("WorkflowRunId can't be empty: the daemon scopes each task's shared filesystem (/workdir) per workflow run, so a run identifier is mandatory")
 	}
 
 	taskPayload, err := getTaskPayload(
@@ -96,6 +101,7 @@ func (e *DaemonCore) RunTask(
 	taskRuntimeArgs := object.TaskRuntimeArgs{
 		Payload:              taskPayload,
 		TaskRunId:            taskRunId,
+		WorkflowRunId:        workflowRunId,
 		HostBlockRegistryDir: e.hostBlockRegistryDir,
 		TaskHash:             taskHash,
 		ArtifactHash:         artifactHash,

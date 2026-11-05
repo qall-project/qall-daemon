@@ -13,6 +13,7 @@ const (
 type TaskRuntimeArgs struct {
 	Payload              *TaskPayload
 	TaskRunId            string
+	WorkflowRunId        string
 	HostBlockRegistryDir string
 	TaskHash             string
 	ArtifactHash         string

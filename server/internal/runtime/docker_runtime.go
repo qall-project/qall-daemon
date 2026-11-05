@@ -44,6 +44,40 @@ const HostSecretsDir = "/tmp/qall-secrets"
 const HostDataloadersDir = "/tmp/qall-dataloaders"
 const HostSandboxDir = "/tmp/qall/unifs"
 
+// mappingSandboxDir returns the host directory backing the shared filesystem
+// (/workdir) of a task container, scoped to its workflow run:
+// <HostSandboxDir>/<workflow_run_id>. The run id is mandatory — the daemon
+// never runs a task with the shared unifs mounted directly at HostSandboxDir —
+// so an empty or unsafe id is rejected with an error.
+func mappingSandboxDir(workflowRunID string) (string, error) {
+	if err := validateWorkflowRunID(workflowRunID); err != nil {
+		return "", err
+	}
+	return filepath.Join(HostSandboxDir, workflowRunID), nil
+}
+
+// validateWorkflowRunID ensures the run id is safe to use as a single path
+// component. The daemon turns it into a bind-mount source, so it must not be
+// able to escape the sandbox root (absolutes, "..", separators) and must not
+// contain control characters.
+func validateWorkflowRunID(id string) error {
+	if id == "" {
+		return fmt.Errorf("workflow_run_id is required to scope the task shared filesystem (/workdir) per workflow run")
+	}
+	if id == "." || id == ".." {
+		return fmt.Errorf("workflow_run_id %q is not a valid run identifier", id)
+	}
+	if strings.ContainsAny(id, "/\\") {
+		return fmt.Errorf("workflow_run_id %q must not contain path separators", id)
+	}
+	for _, r := range id {
+		if r < 0x20 || r == 0x7f {
+			return fmt.Errorf("workflow_run_id %q must not contain control characters", id)
+		}
+	}
+	return nil
+}
+
 func NewDockerRuntime(ctx context.Context, opts Options) (*DockerRuntime, error) {
 	cli, err := client.New(client.FromEnv)
 
@@ -314,7 +348,25 @@ func (d *DockerRuntime) StartTask(ctx context.Context, imageTag string, args obj
 
 	workerRegistryDir := "/registry"
 	workerTokenPath := "/run/secrets/qall_token"
-	workerSandboxDir := "/tmp/unifs"
+	taskSandboxDir := "/workdir"
+
+	// Resolve and provision the per-workflow-run shared filesystem (unifs)
+	// directory: every task of a run shares /workdir bound to
+	// /tmp/qall/unifs/<workflow_run_id>. The run id is mandatory — the daemon
+	// never mounts HostSandboxDir directly. The qall client bind-mounts
+	// /tmp/qall/unifs 1:1 from the host into the (containerized) daemon, so the
+	// directory created here is the same host path the workflow run's files
+	// live on. Bind sources must already exist before ContainerCreate, hence
+	// the MkdirAll.
+	sandboxHostDir, err := mappingSandboxDir(args.WorkflowRunId)
+	if err != nil {
+		os.Remove(tokenPath)
+		return "", fmt.Errorf("failed to resolve task sandbox directory: %w", err)
+	}
+	if err := os.MkdirAll(sandboxHostDir, 0777); err != nil {
+		os.Remove(tokenPath)
+		return "", fmt.Errorf("failed to create task sandbox directory %s: %w", sandboxHostDir, err)
+	}
 
 	mounts := []mount.Mount{
 		{
@@ -331,8 +383,8 @@ func (d *DockerRuntime) StartTask(ctx context.Context, imageTag string, args obj
 		},
 		{
 			Type:     mount.TypeBind,
-			Source:   HostSandboxDir,
-			Target:   workerSandboxDir,
+			Source:   sandboxHostDir,
+			Target:   taskSandboxDir,
 			ReadOnly: false, // Explicitly false for read-write access
 		},
 	}
@@ -394,6 +446,10 @@ func (d *DockerRuntime) StartTask(ctx context.Context, imageTag string, args obj
 				"PYTHONUNBUFFERED=1",
 				fmt.Sprintf("QALL_DAEMON_ADDRESS=%s", d.daemonAddr),
 				fmt.Sprintf("QALL_TOKEN_PATH=%s", workerTokenPath),
+				// Forwarded by the qall SDK inside the task container so child
+				// task submissions carry the same run id and stay in the same
+				// per-workflow-run unifs sandbox.
+				fmt.Sprintf("QALL_WORKFLOW_RUN_ID=%s", args.WorkflowRunId),
 			},
 			Cmd: cmd,
 		},
@@ -432,7 +488,7 @@ func (d *DockerRuntime) StartWorker(ctx context.Context, imageTag string, args o
 
 	workerRegistryDir := "/registry"
 	workerTokenPath := "/run/secrets/qall_token"
-	workerSandboxDir := "/tmp/unifs"
+	// workerSandboxDir := "/tmp/unifs"
 
 	mounts := []mount.Mount{
 		{
@@ -447,12 +503,12 @@ func (d *DockerRuntime) StartWorker(ctx context.Context, imageTag string, args o
 			Target:   workerTokenPath,
 			ReadOnly: true,
 		},
-		{
-			Type:     mount.TypeBind,
-			Source:   HostSandboxDir,
-			Target:   workerSandboxDir,
-			ReadOnly: false,
-		},
+		// {
+		// 	Type:     mount.TypeBind,
+		// 	Source:   HostSandboxDir,
+		// 	Target:   workerSandboxDir,
+		// 	ReadOnly: false,
+		// },
 	}
 
 	cmd := []string{
@@ -468,7 +524,7 @@ func (d *DockerRuntime) StartWorker(ctx context.Context, imageTag string, args o
 		"PYTHONUNBUFFERED=1",
 		fmt.Sprintf("TASK_RUN_ID=%s", args.TaskRunId),
 		fmt.Sprintf("QALL_TOKEN_PATH=%s", workerTokenPath),
-		fmt.Sprintf("QALL_DAEMON_ADDRESS=%s:50053", d.daemonContainerID),
+		fmt.Sprintf("QALL_DAEMON_ADDRESS=%s:50053", d.daemonAddr),
 	}
 
 	if args.EnvironmentVariables != nil {

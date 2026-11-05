@@ -55,7 +55,7 @@ class CreateResourceAssignmentRequest(_message.Message):
     ) -> None: ...
 
 class CreateTaskRunRequest(_message.Message):
-    __slots__ = ("task_hash", "artifact_hash", "provider_credentials")
+    __slots__ = ("task_hash", "artifact_hash", "provider_credentials", "workflow_run_id")
 
     class ProviderCredentialsEntry(_message.Message):
         __slots__ = ("key", "value")
@@ -70,14 +70,17 @@ class CreateTaskRunRequest(_message.Message):
     TASK_HASH_FIELD_NUMBER: _ClassVar[int]
     ARTIFACT_HASH_FIELD_NUMBER: _ClassVar[int]
     PROVIDER_CREDENTIALS_FIELD_NUMBER: _ClassVar[int]
+    WORKFLOW_RUN_ID_FIELD_NUMBER: _ClassVar[int]
     task_hash: str
     artifact_hash: str
     provider_credentials: _containers.ScalarMap[str, str]
+    workflow_run_id: str
     def __init__(
         self,
         task_hash: _Optional[str] = ...,
         artifact_hash: _Optional[str] = ...,
         provider_credentials: _Optional[_Mapping[str, str]] = ...,
+        workflow_run_id: _Optional[str] = ...,
     ) -> None: ...
 
 class TaskRun(_message.Message):

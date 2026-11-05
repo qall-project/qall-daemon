@@ -36,7 +36,9 @@ def run():
         try:
             target_hash = "zdpuAzqLuf5oJ9PCKdXPDRzJdU83HsEmXpPszHnAbN1Y2Dr2m"
 
-            request = pb2.CreateTaskRunRequest(task_hash=target_hash)
+            request = pb2.CreateTaskRunRequest(
+                task_hash=target_hash, workflow_run_id="test-workflow-run"
+            )
             print("\nEnvoi de la requête CreateTask...")
             response = client.CreateTaskRun(request)
 
