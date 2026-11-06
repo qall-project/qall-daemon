@@ -117,12 +117,19 @@ func (e *DaemonCore) RunTask(
 		Dataloaders:          e.dataloadersForTask(workflowRunId, taskHash),
 	}
 
+	// Reference the run's dataloader volumes before starting the container:
+	// every failure path below releases them again so a task that never runs
+	// cannot keep a volume alive.
+	dataloaderNames := e.acquireRunDataloaderVolumes(workflowRunId, taskRuntimeArgs.Dataloaders)
+	e.recordTaskDataloaderScope(taskRun.Id, workflowRunId, dataloaderNames)
+
 	containerID, err := e.startTask(
 		ctx,
 		taskRuntimeArgs,
 	)
 
 	if err != nil {
+		e.releaseTaskDataloaderVolumes(ctx, taskRun.Id)
 		e.stopWorkerRuns(ctx, workerRuns)
 
 		_ = e.taskStore.DeleteTaskRun(
@@ -143,6 +150,7 @@ func (e *DaemonCore) RunTask(
 		ctx,
 		taskRun,
 	); err != nil {
+		e.releaseTaskDataloaderVolumes(ctx, taskRun.Id)
 		e.runtime.Stop(ctx, containerID)
 		e.stopWorkerRuns(ctx, workerRuns)
 
@@ -180,12 +188,9 @@ func (e *DaemonCore) GetTaskStatus(ctx context.Context, taskRunId string) (*obje
 			return nil, fmt.Errorf("token file %s for task run ID %s not found", tokenPath, taskRunId)
 		}
 
-		dataloadersFilename := fmt.Sprintf("%s.dataloaders.json", taskRunId)
-		dataloadersPath := filepath.Join(runtime.HostSecretsDir, dataloadersFilename)
-
-		if err := os.Remove(dataloadersPath); err != nil && !os.IsNotExist(err) {
-			return nil, fmt.Errorf("dataloaders secrets file %s for task run ID %s not found", dataloadersPath, taskRunId)
-		}
+		// Release the dataloader volumes this task referenced; the volumes
+		// whose reference count reached zero are removed from Docker.
+		e.releaseTaskDataloaderVolumes(ctx, taskRunId)
 	}
 
 	return &object.TaskRun{

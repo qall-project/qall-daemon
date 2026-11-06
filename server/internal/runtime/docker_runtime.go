@@ -6,7 +6,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/fs"
@@ -31,13 +30,20 @@ import (
 type Options struct {
 	DaemonAddr     string
 	DaemonGrpcPort string
+	// HostVolumesRoot is the host directory shared 1:1 with the daemon
+	// (HOST_VOLUMES_ROOT on the SDK side). Dataloader volumes keep their
+	// rclone VFS cache below it. Empty defaults to DefaultHostVolumesRoot.
+	HostVolumesRoot string
 }
 
 type DockerRuntime struct {
 	client      *client.Client
 	daemonAddr  string // full "host:port" endpoint used by task/worker containers
 	networkName string
-	buildGroup  singleflight.Group
+	// hostVolumesRoot backs the per-(workflow run, dataloader) rclone VFS
+	// cache directories created for dataloader volumes.
+	hostVolumesRoot string
+	buildGroup      singleflight.Group
 }
 
 const HostSecretsDir = "/tmp/qall-secrets"
@@ -143,10 +149,16 @@ func NewDockerRuntime(ctx context.Context, opts Options) (*DockerRuntime, error)
 		grpcPort = "50053"
 	}
 
+	hostVolumesRoot := opts.HostVolumesRoot
+	if hostVolumesRoot == "" {
+		hostVolumesRoot = DefaultHostVolumesRoot
+	}
+
 	return &DockerRuntime{
-		client:      cli,
-		daemonAddr:  fmt.Sprintf("%s:%s", daemonAddr, grpcPort),
-		networkName: networkName,
+		client:          cli,
+		daemonAddr:      fmt.Sprintf("%s:%s", daemonAddr, grpcPort),
+		networkName:     networkName,
+		hostVolumesRoot: hostVolumesRoot,
 	}, nil
 }
 
@@ -346,39 +358,13 @@ func (d *DockerRuntime) StartTask(ctx context.Context, imageTag string, args obj
 	}
 
 	hasDataloaders := len(args.Dataloaders) > 0
-	dataloadersPath := filepath.Join(HostSecretsDir, fmt.Sprintf("%s.dataloaders.json", args.TaskRunId))
 
 	cleanupSecrets := func() {
 		os.Remove(tokenPath)
-		if hasDataloaders {
-			os.Remove(dataloadersPath)
-		}
-	}
-
-	// Dataloader credentials travel the same secrets path as the auth token:
-	// the daemon (trusted) writes this task's own dataloader specs — resolved
-	// by the client from the host keyring and received on the run's
-	// CreateTaskRunRequest — into the per-task-run secrets file and mounts it
-	// read-only at /run/secrets/qall_dataloaders. The JSON shape
-	// ({name: {src, dst, creds}}) is the same one the client used to write, so
-	// the container-side bootstrap is unchanged. Tasks without dataloaders get
-	// no file, mount or env var.
-	if hasDataloaders {
-		dataloadersJSON, err := marshalDataloadersSecrets(args.Dataloaders)
-		if err != nil {
-			os.Remove(tokenPath)
-			return "", fmt.Errorf("failed to serialize dataloader secrets: %w", err)
-		}
-
-		if err := os.WriteFile(dataloadersPath, dataloadersJSON, 0400); err != nil {
-			os.Remove(tokenPath)
-			return "", fmt.Errorf("failed to write dataloader secrets: %w", err)
-		}
 	}
 
 	workerRegistryDir := "/registry"
 	workerTokenPath := "/run/secrets/qall_token"
-	workerDataloadersPath := "/run/secrets/qall_dataloaders"
 	taskSandboxDir := "/workdir"
 
 	// Resolve and provision the per-workflow-run shared filesystem (unifs)
@@ -420,33 +406,23 @@ func (d *DockerRuntime) StartTask(ctx context.Context, imageTag string, args obj
 		},
 	}
 
-	// The dataloader secrets file lives in the daemon's /tmp/qall-secrets dir
-	// (the same root-owned secret store as the auth token) and is mounted
-	// read-only at /run/secrets/qall_dataloaders inside the task container.
-	if hasDataloaders {
-		mounts = append(mounts, mount.Mount{
-			Type:     mount.TypeBind,
-			Source:   dataloadersPath,
-			Target:   workerDataloadersPath,
-			ReadOnly: true,
-		})
+	// Dataloaders are real kernel mounts: remote object-storage sources get a
+	// dynamically created Docker volume backed by the rclone volume plugin,
+	// mounted read-write at "/"+dst (dst="my_bucket" -> /my_bucket). file://
+	// and bare absolute sources stay plain read-only bind mounts. Every
+	// volume created here is rolled back if the container cannot be created or
+	// started, so a failed task never leaks a volume.
+	var dataloaderVolumes []string
 
-		// file:// dataloader sources are host-local directories (e.g.
-		// file:///home/me/data). Unlike object-storage sources (s3://, gcs://,
-		// ...) — which the task container reaches over the network using the
-		// resolved credentials from the secrets file — a host directory is not
-		// visible inside a task container unless it is bind-mounted into it.
-		// Only the daemon can add mounts when creating the container, so it
-		// derives the file:// sources from the received specs (never the
-		// credential content) and forwards each one read-only at the same path.
-		for _, src := range dataloaderFileSources(args.Dataloaders) {
-			mounts = append(mounts, mount.Mount{
-				Type:     mount.TypeBind,
-				Source:   src,
-				Target:   src,
-				ReadOnly: true,
-			})
+	if hasDataloaders {
+		dataloaderMounts, err := d.dataloaderMounts(ctx, args.WorkflowRunId, args.Dataloaders)
+		if err != nil {
+			cleanupSecrets()
+			return "", err
 		}
+
+		mounts = append(mounts, dataloaderMounts...)
+		dataloaderVolumes = volumeMountSources(dataloaderMounts)
 	}
 
 	cmd := []string{
@@ -473,10 +449,6 @@ func (d *DockerRuntime) StartTask(ctx context.Context, imageTag string, args obj
 		fmt.Sprintf("QALL_WORKFLOW_RUN_ID=%s", args.WorkflowRunId),
 	}
 
-	if hasDataloaders {
-		taskEnv = append(taskEnv, fmt.Sprintf("QALL_DATALOADERS_PATH=%s", workerDataloadersPath))
-	}
-
 	resp, err := d.client.ContainerCreate(ctx, client.ContainerCreateOptions{
 		Name: args.Name,
 		Config: &container.Config{
@@ -492,11 +464,23 @@ func (d *DockerRuntime) StartTask(ctx context.Context, imageTag string, args obj
 
 	if err != nil {
 		cleanupSecrets()
+		d.removeDataloaderVolumesBestEffort(ctx, dataloaderVolumes)
+
+		if dlErr := containerDataloaderError("container-create", err, dataloaderVolumes); dlErr != nil {
+			return "", dlErr
+		}
+
 		return "", fmt.Errorf("failed to create task container: %w", err)
 	}
 
 	if _, err := d.client.ContainerStart(ctx, resp.ID, client.ContainerStartOptions{}); err != nil {
 		cleanupSecrets()
+		d.removeDataloaderVolumesBestEffort(ctx, dataloaderVolumes)
+
+		if dlErr := containerDataloaderError("container-start", err, dataloaderVolumes); dlErr != nil {
+			return "", dlErr
+		}
+
 		return "", fmt.Errorf("failed to start task container: %w", err)
 	}
 
@@ -856,55 +840,13 @@ func qallVersionArg(qallVersion string) string {
 	return fmt.Sprintf("==%s", qallVersion)
 }
 
-// marshalDataloadersSecrets serializes a task's dataloader specs into the
-// secrets-file shape the qall runtime expects inside the task container:
-// {name: {src, dst, creds}}. The client used to write this exact layout, so
-// the container-side bootstrap (subprocessor) is unchanged.
-func marshalDataloadersSecrets(specs []object.DataloaderSpec) ([]byte, error) {
-	secrets := make(map[string]map[string]any, len(specs))
-	for _, spec := range specs {
-		entry := make(map[string]any, 3)
-		entry["src"] = spec.Src
-		entry["dst"] = spec.Dst
-		if spec.Credentials == nil {
-			entry["creds"] = map[string]string{}
-		} else {
-			entry["creds"] = spec.Credentials
+// removeDataloaderVolumesBestEffort removes the volumes a task created when the
+// container fails to be created or started. Failures are only logged: the run's
+// reaper sweeps leftovers anyway.
+func (d *DockerRuntime) removeDataloaderVolumesBestEffort(ctx context.Context, volumeNames []string) {
+	for _, volName := range volumeNames {
+		if err := d.removeDataloaderVolume(ctx, volName); err != nil {
+			log.Printf("[Dataloader] Failed to roll back volume %s: %v", volName, err)
 		}
-		secrets[spec.Name] = entry
 	}
-	return json.Marshal(secrets)
-}
-
-// dataloaderFileSources returns the host directories backing the `file://`
-// dataloader sources referenced by the given specs, so the daemon can
-// bind-mount them read-only into the task container. It only reads the `Src`
-// fields of the received specs and never touches the credential content.
-// Object-storage sources and empty/relative entries yield no mounts.
-func dataloaderFileSources(specs []object.DataloaderSpec) []string {
-	var sources []string
-	seen := make(map[string]bool)
-	for _, spec := range specs {
-		src := strings.TrimSpace(spec.Src)
-		if src == "" {
-			continue
-		}
-		var hostPath string
-		switch {
-		case strings.HasPrefix(src, "file://"):
-			hostPath = strings.TrimPrefix(src, "file://")
-		case strings.Contains(src, "://"):
-			// Remote object storage: no host mount needed.
-			continue
-		default:
-			hostPath = src
-		}
-		hostPath = filepath.Clean(hostPath)
-		if !filepath.IsAbs(hostPath) || seen[hostPath] {
-			continue
-		}
-		seen[hostPath] = true
-		sources = append(sources, hostPath)
-	}
-	return sources
 }

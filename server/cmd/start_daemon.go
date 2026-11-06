@@ -21,6 +21,7 @@ type config struct {
 	HostBlockRegistryDir string
 	BlockRegistryDir     string
 	ArtifactRegistryDir  string
+	HostVolumesRoot      string
 	RemoteRegistryAddr   string
 	DaemonAddr           string
 	GrpcPort             string
@@ -45,8 +46,9 @@ func main() {
 	defer stores.Close()
 
 	containerRuntime, err := runtime.NewDockerRuntime(ctx, runtime.Options{
-		DaemonAddr:     cfg.DaemonAddr,
-		DaemonGrpcPort: cfg.GrpcPort,
+		DaemonAddr:      cfg.DaemonAddr,
+		DaemonGrpcPort:  cfg.GrpcPort,
+		HostVolumesRoot: cfg.HostVolumesRoot,
 	})
 
 	if err != nil {
@@ -100,6 +102,7 @@ func parseFlags() *config {
 	flag.StringVar(&cfg.HostBlockRegistryDir, "host-task-dir", defaultCacheDir("block-registry"), "Host path to the Block Registry, bind-mounted into task/worker containers as /registry")
 	flag.StringVar(&cfg.BlockRegistryDir, "block-registry-dir", defaultCacheDir("block-registry"), "Directory the daemon reads its local block registry from")
 	flag.StringVar(&cfg.ArtifactRegistryDir, "artifact-registry-dir", defaultCacheDir("artifact-registry"), "Directory the daemon writes artifacts and its metadata DB to")
+	flag.StringVar(&cfg.HostVolumesRoot, "host-volumes-root", runtime.DefaultHostVolumesRoot, "Host directory shared 1:1 with the daemon (HOST_VOLUMES_ROOT); dataloader volumes keep their rclone VFS cache below it")
 	flag.StringVar(&cfg.RemoteRegistryAddr, "registry-addr", "127.0.0.1:50051", "Address of the remote registry")
 	flag.StringVar(&cfg.DaemonAddr, "daemon-addr", "", "Address (host or IP) task/worker containers use to reach this daemon; defaults to the bridge gateway when run natively on the host, or the container hostname when containerized")
 	flag.StringVar(&cfg.GrpcPort, "grpc-port", "50053", "gRPC listening port")
