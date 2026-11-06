@@ -71,7 +71,20 @@ func (s *ApiV1Server) CreateTaskRun(ctx context.Context, req *pbDaemon.CreateTas
 		return nil, status.Error(codes.InvalidArgument, "workflow_run_id cannot be empty: the daemon scopes each task's shared filesystem (/workdir) per workflow run")
 	}
 
-	taskRun, err := s.core.RunTask(ctx, req.GetTaskHash(), req.GetArtifactHash(), req.GetProviderCredentials(), req.GetWorkflowRunId())
+	dataloaders := make([]object.DataloaderEntry, 0, len(req.GetDataloaders()))
+	for _, d := range req.GetDataloaders() {
+		dataloaders = append(dataloaders, object.DataloaderEntry{
+			TaskHash: d.GetTaskHash(),
+			DataloaderSpec: object.DataloaderSpec{
+				Name:        d.GetName(),
+				Src:         d.GetSrc(),
+				Dst:         d.GetDst(),
+				Credentials: d.GetCredentials(),
+			},
+		})
+	}
+
+	taskRun, err := s.core.RunTask(ctx, req.GetTaskHash(), req.GetArtifactHash(), req.GetProviderCredentials(), req.GetWorkflowRunId(), dataloaders)
 
 	if err != nil {
 		return nil, err

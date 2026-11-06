@@ -21,6 +21,10 @@ type DaemonCore struct {
 	workers              []*object.WorkerEntry
 	resourceAssignments  map[string]*object.ResourceAssignment
 	watchdog             watchdog.WatchDog
+	// runDataloaders caches each workflow run's dataloader entries (grouped by
+	// task_hash) as received on the root CreateTaskRunRequest, so child task
+	// submissions can be resolved per container without re-sending the specs.
+	runDataloaders map[string]map[string][]object.DataloaderSpec
 }
 
 func NewDaemonCore(
@@ -45,6 +49,7 @@ func NewDaemonCore(
 		runtime:              runtime,
 		watchdog:             watchdog,
 		resourceAssignments:  make(map[string]*object.ResourceAssignment),
+		runDataloaders:       make(map[string]map[string][]object.DataloaderSpec),
 	}, nil
 }
 

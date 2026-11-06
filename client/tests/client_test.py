@@ -37,7 +37,17 @@ def run():
             target_hash = "zdpuAzqLuf5oJ9PCKdXPDRzJdU83HsEmXpPszHnAbN1Y2Dr2m"
 
             request = pb2.CreateTaskRunRequest(
-                task_hash=target_hash, workflow_run_id="test-workflow-run"
+                task_hash=target_hash,
+                workflow_run_id="test-workflow-run",
+                dataloaders=[
+                    pb2.DataloaderEntry(
+                        task_hash=target_hash,
+                        name="mnist",
+                        src="s3://bucket/mnist",
+                        dst="/data/mnist",
+                        credentials={"access_key": "xxx", "secret_key": "yyy"},
+                    )
+                ],
             )
             print("\nEnvoi de la requête CreateTask...")
             response = client.CreateTaskRun(request)

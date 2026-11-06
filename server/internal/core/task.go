@@ -19,6 +19,7 @@ func (e *DaemonCore) RunTask(
 	artifactHash string,
 	providerCredentials map[string]string,
 	workflowRunId string,
+	dataloaderEntries []object.DataloaderEntry,
 ) (*object.TaskRun, error) {
 	if taskHash == "" {
 		return nil, fmt.Errorf("TaskHash can't be empty")
@@ -27,6 +28,10 @@ func (e *DaemonCore) RunTask(
 	if workflowRunId == "" {
 		return nil, fmt.Errorf("WorkflowRunId can't be empty: the daemon scopes each task's shared filesystem (/workdir) per workflow run, so a run identifier is mandatory")
 	}
+
+	// Cache the run's dataloader table (no-op for child submissions, which are
+	// resolved against the entries registered by the parent request).
+	e.registerRunDataloaders(workflowRunId, dataloaderEntries)
 
 	taskPayload, err := getTaskPayload(
 		ctx,
@@ -109,6 +114,7 @@ func (e *DaemonCore) RunTask(
 		WorkerAddresses:      workerAddresses,
 		Name:                 fmt.Sprintf("qall-task-%s", taskRunId[:8]),
 		EnvironmentVariables: envVariables,
+		Dataloaders:          e.dataloadersForTask(workflowRunId, taskHash),
 	}
 
 	containerID, err := e.startTask(
@@ -172,6 +178,13 @@ func (e *DaemonCore) GetTaskStatus(ctx context.Context, taskRunId string) (*obje
 
 		if err := os.Remove(tokenPath); err != nil {
 			return nil, fmt.Errorf("token file %s for task run ID %s not found", tokenPath, taskRunId)
+		}
+
+		dataloadersFilename := fmt.Sprintf("%s.dataloaders.json", taskRunId)
+		dataloadersPath := filepath.Join(runtime.HostSecretsDir, dataloadersFilename)
+
+		if err := os.Remove(dataloadersPath); err != nil && !os.IsNotExist(err) {
+			return nil, fmt.Errorf("dataloaders secrets file %s for task run ID %s not found", dataloadersPath, taskRunId)
 		}
 	}
 
