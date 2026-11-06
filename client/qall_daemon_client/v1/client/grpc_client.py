@@ -30,6 +30,7 @@ from qall_daemon_client.v1.client.protobuf.daemon_runtime_api_v1 import (
 from qall_daemon_client.v1.objects import (
     Artifact,
     DaemonInfo,
+    DataloaderEntry,
     TaskRun,
     TaskRunStatus,
     WorkerEntry,
@@ -117,6 +118,7 @@ class GrpcDaemonClient(DaemonClient):
         workflow_run_id: str,
         artifact_hash: Optional[str] = None,
         provider_credentials: Optional[dict] = None,
+        dataloaders: Optional[list] = None,
     ) -> TaskRun:
         if not workflow_run_id:
             raise ValueError(
@@ -132,6 +134,16 @@ class GrpcDaemonClient(DaemonClient):
             artifact_hash=artifact_hash or "",
             provider_credentials=provider_credentials or {},
             workflow_run_id=workflow_run_id,
+            dataloaders=[
+                pb2.DataloaderEntry(
+                    task_hash=entry.task_hash,
+                    name=entry.name,
+                    src=entry.src,
+                    dst=entry.dst,
+                    credentials=dict(entry.credentials or {}),
+                )
+                for entry in (dataloaders or [])
+            ],
         )
         response = self.__stub.CreateTaskRun(request)
 

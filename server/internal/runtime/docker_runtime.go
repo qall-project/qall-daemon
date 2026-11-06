@@ -41,7 +41,6 @@ type DockerRuntime struct {
 }
 
 const HostSecretsDir = "/tmp/qall-secrets"
-const HostDataloadersDir = "/tmp/qall-dataloaders"
 const HostSandboxDir = "/tmp/qall/unifs"
 
 // mappingSandboxDir returns the host directory backing the shared filesystem
@@ -346,8 +345,40 @@ func (d *DockerRuntime) StartTask(ctx context.Context, imageTag string, args obj
 		return "", fmt.Errorf("failed to write token to RAM: %w", err)
 	}
 
+	hasDataloaders := len(args.Dataloaders) > 0
+	dataloadersPath := filepath.Join(HostSecretsDir, fmt.Sprintf("%s.dataloaders.json", args.TaskRunId))
+
+	cleanupSecrets := func() {
+		os.Remove(tokenPath)
+		if hasDataloaders {
+			os.Remove(dataloadersPath)
+		}
+	}
+
+	// Dataloader credentials travel the same secrets path as the auth token:
+	// the daemon (trusted) writes this task's own dataloader specs — resolved
+	// by the client from the host keyring and received on the run's
+	// CreateTaskRunRequest — into the per-task-run secrets file and mounts it
+	// read-only at /run/secrets/qall_dataloaders. The JSON shape
+	// ({name: {src, dst, creds}}) is the same one the client used to write, so
+	// the container-side bootstrap is unchanged. Tasks without dataloaders get
+	// no file, mount or env var.
+	if hasDataloaders {
+		dataloadersJSON, err := marshalDataloadersSecrets(args.Dataloaders)
+		if err != nil {
+			os.Remove(tokenPath)
+			return "", fmt.Errorf("failed to serialize dataloader secrets: %w", err)
+		}
+
+		if err := os.WriteFile(dataloadersPath, dataloadersJSON, 0400); err != nil {
+			os.Remove(tokenPath)
+			return "", fmt.Errorf("failed to write dataloader secrets: %w", err)
+		}
+	}
+
 	workerRegistryDir := "/registry"
 	workerTokenPath := "/run/secrets/qall_token"
+	workerDataloadersPath := "/run/secrets/qall_dataloaders"
 	taskSandboxDir := "/workdir"
 
 	// Resolve and provision the per-workflow-run shared filesystem (unifs)
@@ -360,11 +391,11 @@ func (d *DockerRuntime) StartTask(ctx context.Context, imageTag string, args obj
 	// the MkdirAll.
 	sandboxHostDir, err := mappingSandboxDir(args.WorkflowRunId)
 	if err != nil {
-		os.Remove(tokenPath)
+		cleanupSecrets()
 		return "", fmt.Errorf("failed to resolve task sandbox directory: %w", err)
 	}
 	if err := os.MkdirAll(sandboxHostDir, 0777); err != nil {
-		os.Remove(tokenPath)
+		cleanupSecrets()
 		return "", fmt.Errorf("failed to create task sandbox directory %s: %w", sandboxHostDir, err)
 	}
 
@@ -389,20 +420,14 @@ func (d *DockerRuntime) StartTask(ctx context.Context, imageTag string, args obj
 		},
 	}
 
-	// The dataloaders dir is a shared, read-only mount holding one
-	// <task_hash>.json per task that references dataloaders. It is provisioned
-	// and owned by the client (which resolves the real secrets from the host
-	// keyring) — the daemon only forwards it and never parses the credential
-	// content. The daemon must NOT create the directory (running as root it
-	// would take ownership away from the unprivileged client), so the mount is
-	// added only when the client has already provisioned it. Note it is a
-	// top-level /tmp path, deliberately separate from the root-owned token
-	// dir (/tmp/qall-secrets).
-	if _, err := os.Stat(HostDataloadersDir); err == nil {
+	// The dataloader secrets file lives in the daemon's /tmp/qall-secrets dir
+	// (the same root-owned secret store as the auth token) and is mounted
+	// read-only at /run/secrets/qall_dataloaders inside the task container.
+	if hasDataloaders {
 		mounts = append(mounts, mount.Mount{
 			Type:     mount.TypeBind,
-			Source:   HostDataloadersDir,
-			Target:   HostDataloadersDir,
+			Source:   dataloadersPath,
+			Target:   workerDataloadersPath,
 			ReadOnly: true,
 		})
 
@@ -412,9 +437,9 @@ func (d *DockerRuntime) StartTask(ctx context.Context, imageTag string, args obj
 		// resolved credentials from the secrets file — a host directory is not
 		// visible inside a task container unless it is bind-mounted into it.
 		// Only the daemon can add mounts when creating the container, so it
-		// reads the `src` fields of this task's own secrets file (never the
-		// `creds`) and forwards each file:// source read-only at the same path.
-		for _, src := range dataloadersFileSources(args.TaskHash) {
+		// derives the file:// sources from the received specs (never the
+		// credential content) and forwards each one read-only at the same path.
+		for _, src := range dataloaderFileSources(args.Dataloaders) {
 			mounts = append(mounts, mount.Mount{
 				Type:     mount.TypeBind,
 				Source:   src,
@@ -438,20 +463,26 @@ func (d *DockerRuntime) StartTask(ctx context.Context, imageTag string, args obj
 		cmd = append(cmd, "--worker-address", wa)
 	}
 
+	taskEnv := []string{
+		"PYTHONUNBUFFERED=1",
+		fmt.Sprintf("QALL_DAEMON_ADDRESS=%s", d.daemonAddr),
+		fmt.Sprintf("QALL_TOKEN_PATH=%s", workerTokenPath),
+		// Forwarded by the qall SDK inside the task container so child
+		// task submissions carry the same run id and stay in the same
+		// per-workflow-run unifs sandbox.
+		fmt.Sprintf("QALL_WORKFLOW_RUN_ID=%s", args.WorkflowRunId),
+	}
+
+	if hasDataloaders {
+		taskEnv = append(taskEnv, fmt.Sprintf("QALL_DATALOADERS_PATH=%s", workerDataloadersPath))
+	}
+
 	resp, err := d.client.ContainerCreate(ctx, client.ContainerCreateOptions{
 		Name: args.Name,
 		Config: &container.Config{
 			Image: imageTag,
-			Env: []string{
-				"PYTHONUNBUFFERED=1",
-				fmt.Sprintf("QALL_DAEMON_ADDRESS=%s", d.daemonAddr),
-				fmt.Sprintf("QALL_TOKEN_PATH=%s", workerTokenPath),
-				// Forwarded by the qall SDK inside the task container so child
-				// task submissions carry the same run id and stay in the same
-				// per-workflow-run unifs sandbox.
-				fmt.Sprintf("QALL_WORKFLOW_RUN_ID=%s", args.WorkflowRunId),
-			},
-			Cmd: cmd,
+			Env:   taskEnv,
+			Cmd:   cmd,
 		},
 		HostConfig: &container.HostConfig{
 			Mounts:      mounts,
@@ -460,12 +491,12 @@ func (d *DockerRuntime) StartTask(ctx context.Context, imageTag string, args obj
 	})
 
 	if err != nil {
-		os.Remove(tokenPath)
+		cleanupSecrets()
 		return "", fmt.Errorf("failed to create task container: %w", err)
 	}
 
 	if _, err := d.client.ContainerStart(ctx, resp.ID, client.ContainerStartOptions{}); err != nil {
-		os.Remove(tokenPath)
+		cleanupSecrets()
 		return "", fmt.Errorf("failed to start task container: %w", err)
 	}
 
@@ -825,32 +856,32 @@ func qallVersionArg(qallVersion string) string {
 	return fmt.Sprintf("==%s", qallVersion)
 }
 
-// dataloadersFileSources returns the host directories backing the `file://`
-// dataloader sources referenced by the given task, so the daemon can
-// bind-mount them read-only into the task container. It reads only the `src`
-// fields of the task's provisioned secrets file
-// (`/tmp/qall-dataloaders/<task_hash>.json`, mounted into the daemon
-// container) and never touches the credential content. Object-storage sources
-// and unparseable/missing files yield no mounts.
-func dataloadersFileSources(taskHash string) []string {
-	data, err := os.ReadFile(filepath.Join(HostDataloadersDir, taskHash+".json"))
-	if err != nil {
-		return nil
+// marshalDataloadersSecrets serializes a task's dataloader specs into the
+// secrets-file shape the qall runtime expects inside the task container:
+// {name: {src, dst, creds}}. The client used to write this exact layout, so
+// the container-side bootstrap (subprocessor) is unchanged.
+func marshalDataloadersSecrets(specs []object.DataloaderSpec) ([]byte, error) {
+	secrets := make(map[string]map[string]any, len(specs))
+	for _, spec := range specs {
+		entry := make(map[string]any, 3)
+		entry["src"] = spec.Src
+		entry["dst"] = spec.Dst
+		if spec.Credentials == nil {
+			entry["creds"] = map[string]string{}
+		} else {
+			entry["creds"] = spec.Credentials
+		}
+		secrets[spec.Name] = entry
 	}
-	return dataloadersFileSourcesFrom(data)
+	return json.Marshal(secrets)
 }
 
-// dataloadersFileSourcesFrom parses a task's dataloader secrets JSON and
-// returns the local host paths for `file://` (or scheme-less absolute) sources.
-func dataloadersFileSourcesFrom(data []byte) []string {
-	var specs map[string]struct {
-		Src string `json:"src"`
-	}
-	if err := json.Unmarshal(data, &specs); err != nil {
-		log.Printf("[Docker-Task] WARNING: could not parse dataloaders secrets file: %v", err)
-		return nil
-	}
-
+// dataloaderFileSources returns the host directories backing the `file://`
+// dataloader sources referenced by the given specs, so the daemon can
+// bind-mount them read-only into the task container. It only reads the `Src`
+// fields of the received specs and never touches the credential content.
+// Object-storage sources and empty/relative entries yield no mounts.
+func dataloaderFileSources(specs []object.DataloaderSpec) []string {
 	var sources []string
 	seen := make(map[string]bool)
 	for _, spec := range specs {

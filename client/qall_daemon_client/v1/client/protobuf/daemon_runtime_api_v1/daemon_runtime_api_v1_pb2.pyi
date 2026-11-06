@@ -4,13 +4,7 @@ from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
-from typing import (
-    ClassVar as _ClassVar,
-    Iterable as _Iterable,
-    Mapping as _Mapping,
-    Optional as _Optional,
-    Union as _Union,
-)
+from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
@@ -20,9 +14,7 @@ class DaemonInfo(_message.Message):
     VERSION_FIELD_NUMBER: _ClassVar[int]
     name: str
     version: str
-    def __init__(
-        self, name: _Optional[str] = ..., version: _Optional[str] = ...
-    ) -> None: ...
+    def __init__(self, name: _Optional[str] = ..., version: _Optional[str] = ...) -> None: ...
 
 class CreateWorkerEntryRequest(_message.Message):
     __slots__ = ("worker_hash", "worker_provider", "input_format")
@@ -32,12 +24,7 @@ class CreateWorkerEntryRequest(_message.Message):
     worker_hash: str
     worker_provider: str
     input_format: str
-    def __init__(
-        self,
-        worker_hash: _Optional[str] = ...,
-        worker_provider: _Optional[str] = ...,
-        input_format: _Optional[str] = ...,
-    ) -> None: ...
+    def __init__(self, worker_hash: _Optional[str] = ..., worker_provider: _Optional[str] = ..., input_format: _Optional[str] = ...) -> None: ...
 
 class CreateResourceAssignmentRequest(_message.Message):
     __slots__ = ("task_hash", "resource_provider", "resource_name")
@@ -47,50 +34,52 @@ class CreateResourceAssignmentRequest(_message.Message):
     task_hash: str
     resource_provider: str
     resource_name: str
-    def __init__(
-        self,
-        task_hash: _Optional[str] = ...,
-        resource_provider: _Optional[str] = ...,
-        resource_name: _Optional[str] = ...,
-    ) -> None: ...
+    def __init__(self, task_hash: _Optional[str] = ..., resource_provider: _Optional[str] = ..., resource_name: _Optional[str] = ...) -> None: ...
+
+class DataloaderEntry(_message.Message):
+    __slots__ = ("task_hash", "name", "src", "dst", "credentials")
+    class CredentialsEntry(_message.Message):
+        __slots__ = ("key", "value")
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: str
+        def __init__(self, key: _Optional[str] = ..., value: _Optional[str] = ...) -> None: ...
+    TASK_HASH_FIELD_NUMBER: _ClassVar[int]
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    SRC_FIELD_NUMBER: _ClassVar[int]
+    DST_FIELD_NUMBER: _ClassVar[int]
+    CREDENTIALS_FIELD_NUMBER: _ClassVar[int]
+    task_hash: str
+    name: str
+    src: str
+    dst: str
+    credentials: _containers.ScalarMap[str, str]
+    def __init__(self, task_hash: _Optional[str] = ..., name: _Optional[str] = ..., src: _Optional[str] = ..., dst: _Optional[str] = ..., credentials: _Optional[_Mapping[str, str]] = ...) -> None: ...
 
 class CreateTaskRunRequest(_message.Message):
-    __slots__ = (
-        "task_hash",
-        "artifact_hash",
-        "provider_credentials",
-        "workflow_run_id",
-    )
-
+    __slots__ = ("task_hash", "artifact_hash", "provider_credentials", "workflow_run_id", "dataloaders")
     class ProviderCredentialsEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
         VALUE_FIELD_NUMBER: _ClassVar[int]
         key: str
         value: str
-        def __init__(
-            self, key: _Optional[str] = ..., value: _Optional[str] = ...
-        ) -> None: ...
-
+        def __init__(self, key: _Optional[str] = ..., value: _Optional[str] = ...) -> None: ...
     TASK_HASH_FIELD_NUMBER: _ClassVar[int]
     ARTIFACT_HASH_FIELD_NUMBER: _ClassVar[int]
     PROVIDER_CREDENTIALS_FIELD_NUMBER: _ClassVar[int]
     WORKFLOW_RUN_ID_FIELD_NUMBER: _ClassVar[int]
+    DATALOADERS_FIELD_NUMBER: _ClassVar[int]
     task_hash: str
     artifact_hash: str
     provider_credentials: _containers.ScalarMap[str, str]
     workflow_run_id: str
-    def __init__(
-        self,
-        task_hash: _Optional[str] = ...,
-        artifact_hash: _Optional[str] = ...,
-        provider_credentials: _Optional[_Mapping[str, str]] = ...,
-        workflow_run_id: _Optional[str] = ...,
-    ) -> None: ...
+    dataloaders: _containers.RepeatedCompositeFieldContainer[DataloaderEntry]
+    def __init__(self, task_hash: _Optional[str] = ..., artifact_hash: _Optional[str] = ..., provider_credentials: _Optional[_Mapping[str, str]] = ..., workflow_run_id: _Optional[str] = ..., dataloaders: _Optional[_Iterable[_Union[DataloaderEntry, _Mapping]]] = ...) -> None: ...
 
 class TaskRun(_message.Message):
     __slots__ = ("id", "status")
-
     class Status(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
         __slots__ = ()
         UNKNOWN: _ClassVar[TaskRun.Status]
@@ -98,7 +87,6 @@ class TaskRun(_message.Message):
         RUNNING: _ClassVar[TaskRun.Status]
         DONE: _ClassVar[TaskRun.Status]
         ERROR: _ClassVar[TaskRun.Status]
-
     UNKNOWN: TaskRun.Status
     PENDING: TaskRun.Status
     RUNNING: TaskRun.Status
@@ -108,11 +96,7 @@ class TaskRun(_message.Message):
     STATUS_FIELD_NUMBER: _ClassVar[int]
     id: str
     status: TaskRun.Status
-    def __init__(
-        self,
-        id: _Optional[str] = ...,
-        status: _Optional[_Union[TaskRun.Status, str]] = ...,
-    ) -> None: ...
+    def __init__(self, id: _Optional[str] = ..., status: _Optional[_Union[TaskRun.Status, str]] = ...) -> None: ...
 
 class GetTaskRunRequest(_message.Message):
     __slots__ = ("task_run_id",)
@@ -126,9 +110,7 @@ class CreateArtifactRequest(_message.Message):
     PAYLOAD_FIELD_NUMBER: _ClassVar[int]
     task_run_id: str
     payload: bytes
-    def __init__(
-        self, task_run_id: _Optional[str] = ..., payload: _Optional[bytes] = ...
-    ) -> None: ...
+    def __init__(self, task_run_id: _Optional[str] = ..., payload: _Optional[bytes] = ...) -> None: ...
 
 class ListArtifactsRequest(_message.Message):
     __slots__ = ("task_run_id",)
@@ -158,9 +140,7 @@ class ListArtifactsResponse(_message.Message):
     __slots__ = ("artifacts",)
     ARTIFACTS_FIELD_NUMBER: _ClassVar[int]
     artifacts: _containers.RepeatedCompositeFieldContainer[Artifact]
-    def __init__(
-        self, artifacts: _Optional[_Iterable[_Union[Artifact, _Mapping]]] = ...
-    ) -> None: ...
+    def __init__(self, artifacts: _Optional[_Iterable[_Union[Artifact, _Mapping]]] = ...) -> None: ...
 
 class ResourceAssignment(_message.Message):
     __slots__ = ("task_hash", "resource_provider", "resource_name")
@@ -170,12 +150,7 @@ class ResourceAssignment(_message.Message):
     task_hash: str
     resource_provider: str
     resource_name: str
-    def __init__(
-        self,
-        task_hash: _Optional[str] = ...,
-        resource_provider: _Optional[str] = ...,
-        resource_name: _Optional[str] = ...,
-    ) -> None: ...
+    def __init__(self, task_hash: _Optional[str] = ..., resource_provider: _Optional[str] = ..., resource_name: _Optional[str] = ...) -> None: ...
 
 class WorkerEntry(_message.Message):
     __slots__ = ("worker_hash", "worker_provider", "input_format")
@@ -185,9 +160,4 @@ class WorkerEntry(_message.Message):
     worker_hash: str
     worker_provider: str
     input_format: str
-    def __init__(
-        self,
-        worker_hash: _Optional[str] = ...,
-        worker_provider: _Optional[str] = ...,
-        input_format: _Optional[str] = ...,
-    ) -> None: ...
+    def __init__(self, worker_hash: _Optional[str] = ..., worker_provider: _Optional[str] = ..., input_format: _Optional[str] = ...) -> None: ...

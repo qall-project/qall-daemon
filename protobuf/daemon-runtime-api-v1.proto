@@ -77,6 +77,19 @@ message CreateResourceAssignmentRequest {
   string resource_name = 3;
 }
 
+message DataloaderEntry {
+  // Task hash this dataloader belongs to. The root CreateTaskRunRequest of a
+  // workflow run carries the whole DAG's dataloaders; the daemon indexes them
+  // per task_hash so each started container only gets its own entries mounted.
+  string task_hash = 1;
+  string name = 2;
+  string src = 3;
+  string dst = 4;
+  // Plaintext credentials (resolved from the client keyring) that the task's
+  // container needs to bind this dataloader.
+  map<string, string> credentials = 5;
+}
+
 message CreateTaskRunRequest {
   string task_hash = 1;
   string artifact_hash = 2;
@@ -85,6 +98,10 @@ message CreateTaskRunRequest {
   // daemon scopes the task's shared filesystem (/workdir) under
   // /tmp/qall/unifs/<workflow_run_id> and rejects requests that omit it.
   string workflow_run_id = 4;
+  // Dataloader entries for the whole workflow run. They are cached by the
+  // daemon keyed on workflow_run_id; each container's own entries are resolved
+  // from this table and written to the run's secrets file.
+  repeated DataloaderEntry dataloaders = 5;
 }
 
 message TaskRun {
