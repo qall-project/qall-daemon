@@ -355,6 +355,116 @@ var _ interface {
 	ErrorName() string
 } = CreateResourceAssignmentRequestValidationError{}
 
+// Validate checks the field values on DataloaderEntry with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *DataloaderEntry) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DataloaderEntry with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// DataloaderEntryMultiError, or nil if none found.
+func (m *DataloaderEntry) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DataloaderEntry) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for TaskHash
+
+	// no validation rules for Name
+
+	// no validation rules for Src
+
+	// no validation rules for Dst
+
+	// no validation rules for Credentials
+
+	if len(errors) > 0 {
+		return DataloaderEntryMultiError(errors)
+	}
+
+	return nil
+}
+
+// DataloaderEntryMultiError is an error wrapping multiple validation errors
+// returned by DataloaderEntry.ValidateAll() if the designated constraints
+// aren't met.
+type DataloaderEntryMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DataloaderEntryMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DataloaderEntryMultiError) AllErrors() []error { return m }
+
+// DataloaderEntryValidationError is the validation error returned by
+// DataloaderEntry.Validate if the designated constraints aren't met.
+type DataloaderEntryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DataloaderEntryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DataloaderEntryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DataloaderEntryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DataloaderEntryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DataloaderEntryValidationError) ErrorName() string { return "DataloaderEntryValidationError" }
+
+// Error satisfies the builtin error interface
+func (e DataloaderEntryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDataloaderEntry.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DataloaderEntryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DataloaderEntryValidationError{}
+
 // Validate checks the field values on CreateTaskRunRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -382,6 +492,42 @@ func (m *CreateTaskRunRequest) validate(all bool) error {
 	// no validation rules for ArtifactHash
 
 	// no validation rules for ProviderCredentials
+
+	// no validation rules for WorkflowRunId
+
+	for idx, item := range m.GetDataloaders() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, CreateTaskRunRequestValidationError{
+						field:  fmt.Sprintf("Dataloaders[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, CreateTaskRunRequestValidationError{
+						field:  fmt.Sprintf("Dataloaders[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return CreateTaskRunRequestValidationError{
+					field:  fmt.Sprintf("Dataloaders[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
 
 	if len(errors) > 0 {
 		return CreateTaskRunRequestMultiError(errors)
@@ -691,7 +837,34 @@ func (m *CreateArtifactRequest) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for TaskRunId
+	if all {
+		switch v := interface{}(m.GetTaskRunId()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CreateArtifactRequestValidationError{
+					field:  "TaskRunId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CreateArtifactRequestValidationError{
+					field:  "TaskRunId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTaskRunId()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CreateArtifactRequestValidationError{
+				field:  "TaskRunId",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	// no validation rules for Payload
 

@@ -4,6 +4,7 @@ package daemon_runtime_api_v1;
 
 import "google/protobuf/empty.proto";
 import "google/api/annotations.proto";
+import "google/protobuf/wrappers.proto";
 
 option go_package = "internal/server/protobuf/daemon_runtime_api_v1";
 
@@ -123,8 +124,8 @@ message GetTaskRunRequest {
 }
 
 message CreateArtifactRequest {
-  string  task_run_id = 1;
-  bytes   payload = 2;
+  google.protobuf.StringValue task_run_id = 1;
+  bytes payload = 2;
 }
 
 message ListArtifactsRequest {

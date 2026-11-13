@@ -2,7 +2,7 @@ package object
 
 import "time"
 
-type ArtifactRequest struct {
+type CreateArtifactRequest struct {
 	TaskRunId string
 	Payload   []byte
 }

@@ -215,6 +215,7 @@ components:
             type: object
             properties:
                 taskRunId:
+                    nullable: true
                     type: string
                 payload:
                     type: string
@@ -239,6 +240,14 @@ components:
                     type: object
                     additionalProperties:
                         type: string
+                workflowRunId:
+                    type: string
+                    description: 'Identifier of the workflow run this task belongs to. It is mandatory: the daemon scopes the task''s shared filesystem (/workdir) under /tmp/qall/unifs/<workflow_run_id> and rejects requests that omit it.'
+                dataloaders:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/DataloaderEntry'
+                    description: Dataloader entries for the whole workflow run. They are cached by the daemon keyed on workflow_run_id; each container's own entries are resolved from this table and written to the run's secrets file.
         CreateWorkerEntryRequest:
             type: object
             properties:
@@ -255,6 +264,23 @@ components:
                     type: string
                 version:
                     type: string
+        DataloaderEntry:
+            type: object
+            properties:
+                taskHash:
+                    type: string
+                    description: Task hash this dataloader belongs to. The root CreateTaskRunRequest of a workflow run carries the whole DAG's dataloaders; the daemon indexes them per task_hash so each started container only gets its own entries mounted.
+                name:
+                    type: string
+                src:
+                    type: string
+                dst:
+                    type: string
+                credentials:
+                    type: object
+                    additionalProperties:
+                        type: string
+                    description: Plaintext credentials (resolved from the client keyring) that the task's container needs to bind this dataloader.
         GoogleProtobufAny:
             type: object
             properties:

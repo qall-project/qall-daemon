@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from __future__ import annotations
-from pathlib import Path
 
 import grpc
 import time
@@ -30,7 +29,6 @@ from qall_daemon_client.v1.client.protobuf.daemon_runtime_api_v1 import (
 from qall_daemon_client.v1.objects import (
     Artifact,
     DaemonInfo,
-    DataloaderEntry,
     TaskRun,
     TaskRunStatus,
     WorkerEntry,
@@ -179,8 +177,8 @@ class GrpcDaemonClient(DaemonClient):
 
     def create_artifact(
         self,
-        task_run_id: str,
         payload: bytes,
+        task_run_id: Optional[str] = None,
     ) -> Artifact:
         request = pb2.CreateArtifactRequest(
             task_run_id=task_run_id,

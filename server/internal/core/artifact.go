@@ -11,7 +11,7 @@ import (
 	"github.com/qall-project/qall-daemon/server/internal/object"
 )
 
-func (e *DaemonCore) CreateArtifact(ctx context.Context, req object.ArtifactRequest, auth bool) (*object.Artifact, error) {
+func (e *DaemonCore) CreateArtifact(ctx context.Context, req object.CreateArtifactRequest, auth bool) (*object.Artifact, error) {
 	if len(req.Payload) == 0 {
 		return nil, fmt.Errorf("artifact payload cannot be empty")
 	}

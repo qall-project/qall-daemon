@@ -131,24 +131,25 @@ func (s *ApiV1Server) GetTaskRun(ctx context.Context, req *pbDaemon.GetTaskRunRe
 func (s *ApiV1Server) CreateArtifact(ctx context.Context, req *pbDaemon.CreateArtifactRequest) (*pbDaemon.Artifact, error) {
 	log.Println("Request received: CreateArtifact")
 
-	auth, err := s.core.AuthTask(ctx, req.GetTaskRunId())
+	auth, err := s.core.AuthTask(ctx, req.GetTaskRunId().GetValue())
+
 	if err != nil {
 		return nil, err
 	}
 
-	newArtifact := object.ArtifactRequest{
-		TaskRunId: req.GetTaskRunId(),
+	createArtifact := object.CreateArtifactRequest{
+		TaskRunId: req.GetTaskRunId().GetValue(),
 		Payload:   req.GetPayload(),
 	}
 
-	info, err := s.core.CreateArtifact(ctx, newArtifact, auth)
+	artifact, err := s.core.CreateArtifact(ctx, createArtifact, auth)
 	if err != nil {
 		log.Printf("[Error] Failed to store artifact: %v", err)
 		return nil, fmt.Errorf("failed to persist artifact: %v", err)
 	}
 
 	return &pbDaemon.Artifact{
-		Hash: info.Hash,
+		Hash: artifact.Hash,
 	}, nil
 }
 
