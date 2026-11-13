@@ -19,6 +19,7 @@ import time
 from typing import Optional
 
 from google.protobuf import empty_pb2
+from google.protobuf.wrappers_pb2 import StringValue
 
 from qall_daemon_client.v1.client.protobuf.daemon_runtime_api_v1 import (
     daemon_runtime_api_v1_pb2 as pb2,
@@ -181,7 +182,7 @@ class GrpcDaemonClient(DaemonClient):
         task_run_id: Optional[str] = None,
     ) -> Artifact:
         request = pb2.CreateArtifactRequest(
-            task_run_id=task_run_id,
+            task_run_id=StringValue(value=task_run_id),
             payload=payload,
         )
 
