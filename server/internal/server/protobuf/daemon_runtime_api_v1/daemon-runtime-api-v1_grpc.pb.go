@@ -21,7 +21,6 @@ const _ = grpc.SupportPackageIsVersion7
 
 const (
 	Api_GetServiceInfo_FullMethodName           = "/daemon_runtime_api_v1.Api/GetServiceInfo"
-	Api_CreateWorkerEntry_FullMethodName        = "/daemon_runtime_api_v1.Api/CreateWorkerEntry"
 	Api_CreateResourceAssignment_FullMethodName = "/daemon_runtime_api_v1.Api/CreateResourceAssignment"
 	Api_CreateTaskRun_FullMethodName            = "/daemon_runtime_api_v1.Api/CreateTaskRun"
 	Api_GetTaskRun_FullMethodName               = "/daemon_runtime_api_v1.Api/GetTaskRun"
@@ -35,7 +34,6 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ApiClient interface {
 	GetServiceInfo(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*DaemonInfo, error)
-	CreateWorkerEntry(ctx context.Context, in *CreateWorkerEntryRequest, opts ...grpc.CallOption) (*WorkerEntry, error)
 	CreateResourceAssignment(ctx context.Context, in *CreateResourceAssignmentRequest, opts ...grpc.CallOption) (*ResourceAssignment, error)
 	CreateTaskRun(ctx context.Context, in *CreateTaskRunRequest, opts ...grpc.CallOption) (*TaskRun, error)
 	GetTaskRun(ctx context.Context, in *GetTaskRunRequest, opts ...grpc.CallOption) (*TaskRun, error)
@@ -55,15 +53,6 @@ func NewApiClient(cc grpc.ClientConnInterface) ApiClient {
 func (c *apiClient) GetServiceInfo(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*DaemonInfo, error) {
 	out := new(DaemonInfo)
 	err := c.cc.Invoke(ctx, Api_GetServiceInfo_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *apiClient) CreateWorkerEntry(ctx context.Context, in *CreateWorkerEntryRequest, opts ...grpc.CallOption) (*WorkerEntry, error) {
-	out := new(WorkerEntry)
-	err := c.cc.Invoke(ctx, Api_CreateWorkerEntry_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +118,6 @@ func (c *apiClient) ListArtifacts(ctx context.Context, in *ListArtifactsRequest,
 // for forward compatibility
 type ApiServer interface {
 	GetServiceInfo(context.Context, *emptypb.Empty) (*DaemonInfo, error)
-	CreateWorkerEntry(context.Context, *CreateWorkerEntryRequest) (*WorkerEntry, error)
 	CreateResourceAssignment(context.Context, *CreateResourceAssignmentRequest) (*ResourceAssignment, error)
 	CreateTaskRun(context.Context, *CreateTaskRunRequest) (*TaskRun, error)
 	GetTaskRun(context.Context, *GetTaskRunRequest) (*TaskRun, error)
@@ -145,9 +133,6 @@ type UnimplementedApiServer struct {
 
 func (UnimplementedApiServer) GetServiceInfo(context.Context, *emptypb.Empty) (*DaemonInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetServiceInfo not implemented")
-}
-func (UnimplementedApiServer) CreateWorkerEntry(context.Context, *CreateWorkerEntryRequest) (*WorkerEntry, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateWorkerEntry not implemented")
 }
 func (UnimplementedApiServer) CreateResourceAssignment(context.Context, *CreateResourceAssignmentRequest) (*ResourceAssignment, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateResourceAssignment not implemented")
@@ -194,24 +179,6 @@ func _Api_GetServiceInfo_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ApiServer).GetServiceInfo(ctx, req.(*emptypb.Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Api_CreateWorkerEntry_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateWorkerEntryRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ApiServer).CreateWorkerEntry(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Api_CreateWorkerEntry_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ApiServer).CreateWorkerEntry(ctx, req.(*CreateWorkerEntryRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -334,10 +301,6 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetServiceInfo",
 			Handler:    _Api_GetServiceInfo_Handler,
-		},
-		{
-			MethodName: "CreateWorkerEntry",
-			Handler:    _Api_CreateWorkerEntry_Handler,
 		},
 		{
 			MethodName: "CreateResourceAssignment",

@@ -4,4 +4,5 @@ type ResourceAssignment struct {
 	ResourceProvider string
 	ResourceName     string
 	TaskHash         string
+	WorkerHash       string
 }

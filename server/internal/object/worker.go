@@ -8,9 +8,3 @@ type WorkerPayload struct {
 	Image              string
 	RuntimeQallVersion string
 }
-
-type WorkerEntry struct {
-	WorkerProvider string
-	InputFormat    string
-	WorkerHash     string
-}

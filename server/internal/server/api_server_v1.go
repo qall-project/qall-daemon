@@ -28,26 +28,10 @@ func (s *ApiV1Server) GetServiceInfo(ctx context.Context, in *emptypb.Empty) (*p
 	return &pbDaemon.DaemonInfo{Name: "qall-daemon", Version: "v1"}, nil
 }
 
-func (s *ApiV1Server) CreateWorkerEntry(ctx context.Context, req *pbDaemon.CreateWorkerEntryRequest) (*pbDaemon.WorkerEntry, error) {
-	log.Println("Request received: CreateWorkerEntry:", req.GetWorkerProvider(), req.GetInputFormat())
-
-	wk, err := s.core.CreateWorkerEntry(ctx, req.GetWorkerProvider(), req.GetWorkerHash(), req.GetInputFormat())
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &pbDaemon.WorkerEntry{
-		WorkerProvider: wk.WorkerProvider,
-		WorkerHash:     wk.WorkerHash,
-		InputFormat:    wk.InputFormat,
-	}, nil
-}
-
 func (s *ApiV1Server) CreateResourceAssignment(ctx context.Context, req *pbDaemon.CreateResourceAssignmentRequest) (*pbDaemon.ResourceAssignment, error) {
 	log.Println("Request received: CreateResourceAssignment:", req.GetResourceProvider(), req.GetResourceName())
 
-	ra, err := s.core.CreateResourceAssignment(ctx, req.GetResourceProvider(), req.GetTaskHash(), req.GetResourceName())
+	ra, err := s.core.CreateResourceAssignment(ctx, req.GetResourceProvider(), req.GetTaskHash(), req.GetWorkerHash().GetValue(), req.GetResourceName())
 
 	if err != nil {
 		return nil, err
@@ -57,6 +41,7 @@ func (s *ApiV1Server) CreateResourceAssignment(ctx context.Context, req *pbDaemo
 		ResourceProvider: ra.ResourceProvider,
 		TaskHash:         ra.TaskHash,
 		ResourceName:     ra.ResourceName,
+		WorkerHash:       ra.WorkerHash,
 	}, nil
 }
 

@@ -173,31 +173,6 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /v1/workers:
-        post:
-            tags:
-                - Api
-            summary: CreateWorkerEntry
-            operationId: Api_CreateWorkerEntry
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/CreateWorkerEntryRequest'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/WorkerEntry'
-                default:
-                    description: Default error response
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Status'
 components:
     schemas:
         Artifact:
@@ -229,6 +204,9 @@ components:
                     type: string
                 resourceName:
                     type: string
+                workerHash:
+                    nullable: true
+                    type: string
         CreateTaskRunRequest:
             type: object
             properties:
@@ -248,15 +226,6 @@ components:
                     items:
                         $ref: '#/components/schemas/DataloaderEntry'
                     description: Dataloader entries for the whole workflow run. They are cached by the daemon keyed on workflow_run_id; each container's own entries are resolved from this table and written to the run's secrets file.
-        CreateWorkerEntryRequest:
-            type: object
-            properties:
-                workerHash:
-                    type: string
-                workerProvider:
-                    type: string
-                inputFormat:
-                    type: string
         DaemonInfo:
             type: object
             properties:
@@ -305,6 +274,8 @@ components:
                     type: string
                 resourceName:
                     type: string
+                workerHash:
+                    type: string
         Status:
             type: object
             properties:
@@ -335,14 +306,5 @@ components:
                         - ERROR
                     type: string
                     format: enum
-        WorkerEntry:
-            type: object
-            properties:
-                workerHash:
-                    type: string
-                workerProvider:
-                    type: string
-                inputFormat:
-                    type: string
 tags:
     - name: Api

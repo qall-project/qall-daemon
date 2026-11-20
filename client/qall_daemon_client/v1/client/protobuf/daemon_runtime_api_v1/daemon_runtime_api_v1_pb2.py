@@ -24,7 +24,7 @@ from google.protobuf import wrappers_pb2 as google_dot_protobuf_dot_wrappers__pb
 
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
-    b'\n\x1b\x64\x61\x65mon-runtime-api-v1.proto\x12\x15\x64\x61\x65mon_runtime_api_v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1egoogle/protobuf/wrappers.proto"+\n\nDaemonInfo\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07version\x18\x02 \x01(\t"^\n\x18\x43reateWorkerEntryRequest\x12\x13\n\x0bworker_hash\x18\x01 \x01(\t\x12\x17\n\x0fworker_provider\x18\x02 \x01(\t\x12\x14\n\x0cinput_format\x18\x03 \x01(\t"f\n\x1f\x43reateResourceAssignmentRequest\x12\x11\n\ttask_hash\x18\x01 \x01(\t\x12\x19\n\x11resource_provider\x18\x02 \x01(\t\x12\x15\n\rresource_name\x18\x03 \x01(\t"\xce\x01\n\x0f\x44\x61taloaderEntry\x12\x11\n\ttask_hash\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x0b\n\x03src\x18\x03 \x01(\t\x12\x0b\n\x03\x64st\x18\x04 \x01(\t\x12L\n\x0b\x63redentials\x18\x05 \x03(\x0b\x32\x37.daemon_runtime_api_v1.DataloaderEntry.CredentialsEntry\x1a\x32\n\x10\x43redentialsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01"\xb6\x02\n\x14\x43reateTaskRunRequest\x12\x11\n\ttask_hash\x18\x01 \x01(\t\x12\x15\n\rartifact_hash\x18\x02 \x01(\t\x12\x62\n\x14provider_credentials\x18\x03 \x03(\x0b\x32\x44.daemon_runtime_api_v1.CreateTaskRunRequest.ProviderCredentialsEntry\x12\x17\n\x0fworkflow_run_id\x18\x04 \x01(\t\x12;\n\x0b\x64\x61taloaders\x18\x05 \x03(\x0b\x32&.daemon_runtime_api_v1.DataloaderEntry\x1a:\n\x18ProviderCredentialsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01"\x92\x01\n\x07TaskRun\x12\n\n\x02id\x18\x01 \x01(\t\x12\x35\n\x06status\x18\x02 \x01(\x0e\x32%.daemon_runtime_api_v1.TaskRun.Status"D\n\x06Status\x12\x0b\n\x07UNKNOWN\x10\x00\x12\x0b\n\x07PENDING\x10\x01\x12\x0b\n\x07RUNNING\x10\x02\x12\x08\n\x04\x44ONE\x10\x03\x12\t\n\x05\x45RROR\x10\x04"(\n\x11GetTaskRunRequest\x12\x13\n\x0btask_run_id\x18\x01 \x01(\t"[\n\x15\x43reateArtifactRequest\x12\x31\n\x0btask_run_id\x18\x01 \x01(\x0b\x32\x1c.google.protobuf.StringValue\x12\x0f\n\x07payload\x18\x02 \x01(\x0c"+\n\x14ListArtifactsRequest\x12\x13\n\x0btask_run_id\x18\x01 \x01(\t"0\n\x17\x44ownloadArtifactRequest\x12\x15\n\rartifact_hash\x18\x01 \x01(\t"\x18\n\x08\x41rtifact\x12\x0c\n\x04hash\x18\x01 \x01(\t""\n\x0f\x41rtifactPayload\x12\x0f\n\x07payload\x18\x01 \x01(\x0c"K\n\x15ListArtifactsResponse\x12\x32\n\tartifacts\x18\x01 \x03(\x0b\x32\x1f.daemon_runtime_api_v1.Artifact"Y\n\x12ResourceAssignment\x12\x11\n\ttask_hash\x18\x01 \x01(\t\x12\x19\n\x11resource_provider\x18\x02 \x01(\t\x12\x15\n\rresource_name\x18\x03 \x01(\t"Q\n\x0bWorkerEntry\x12\x13\n\x0bworker_hash\x18\x01 \x01(\t\x12\x17\n\x0fworker_provider\x18\x02 \x01(\t\x12\x14\n\x0cinput_format\x18\x03 \x01(\t2\x87\x08\n\x03\x41pi\x12X\n\x0eGetServiceInfo\x12\x16.google.protobuf.Empty\x1a!.daemon_runtime_api_v1.DaemonInfo"\x0b\x82\xd3\xe4\x93\x02\x05\x12\x03/v1\x12\x80\x01\n\x11\x43reateWorkerEntry\x12/.daemon_runtime_api_v1.CreateWorkerEntryRequest\x1a".daemon_runtime_api_v1.WorkerEntry"\x16\x82\xd3\xe4\x93\x02\x10"\x0b/v1/workers:\x01*\x12\x99\x01\n\x18\x43reateResourceAssignment\x12\x36.daemon_runtime_api_v1.CreateResourceAssignmentRequest\x1a).daemon_runtime_api_v1.ResourceAssignment"\x1a\x82\xd3\xe4\x93\x02\x14"\x0f/v1/assignments:\x01*\x12v\n\rCreateTaskRun\x12+.daemon_runtime_api_v1.CreateTaskRunRequest\x1a\x1e.daemon_runtime_api_v1.TaskRun"\x18\x82\xd3\xe4\x93\x02\x12"\r/v1/task_runs:\x01*\x12|\n\nGetTaskRun\x12(.daemon_runtime_api_v1.GetTaskRunRequest\x1a\x1e.daemon_runtime_api_v1.TaskRun"$\x82\xd3\xe4\x93\x02\x1e\x12\x1c/v1/tasks_runs/{task_run_id}\x12y\n\x0e\x43reateArtifact\x12,.daemon_runtime_api_v1.CreateArtifactRequest\x1a\x1f.daemon_runtime_api_v1.Artifact"\x18\x82\xd3\xe4\x93\x02\x12"\r/v1/artifacts:\x01*\x12\x91\x01\n\x10\x44ownloadArtifact\x12..daemon_runtime_api_v1.DownloadArtifactRequest\x1a&.daemon_runtime_api_v1.ArtifactPayload"%\x82\xd3\xe4\x93\x02\x1f\x12\x1d/v1/artifacts/{artifact_hash}\x12\x81\x01\n\rListArtifacts\x12+.daemon_runtime_api_v1.ListArtifactsRequest\x1a,.daemon_runtime_api_v1.ListArtifactsResponse"\x15\x82\xd3\xe4\x93\x02\x0f\x12\r/v1/artifactsB0Z.internal/server/protobuf/daemon_runtime_api_v1b\x06proto3'
+    b'\n\x1b\x64\x61\x65mon-runtime-api-v1.proto\x12\x15\x64\x61\x65mon_runtime_api_v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1egoogle/protobuf/wrappers.proto"+\n\nDaemonInfo\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07version\x18\x02 \x01(\t"\x99\x01\n\x1f\x43reateResourceAssignmentRequest\x12\x11\n\ttask_hash\x18\x01 \x01(\t\x12\x19\n\x11resource_provider\x18\x02 \x01(\t\x12\x15\n\rresource_name\x18\x03 \x01(\t\x12\x31\n\x0bworker_hash\x18\x04 \x01(\x0b\x32\x1c.google.protobuf.StringValue"\xce\x01\n\x0f\x44\x61taloaderEntry\x12\x11\n\ttask_hash\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x0b\n\x03src\x18\x03 \x01(\t\x12\x0b\n\x03\x64st\x18\x04 \x01(\t\x12L\n\x0b\x63redentials\x18\x05 \x03(\x0b\x32\x37.daemon_runtime_api_v1.DataloaderEntry.CredentialsEntry\x1a\x32\n\x10\x43redentialsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01"\xb6\x02\n\x14\x43reateTaskRunRequest\x12\x11\n\ttask_hash\x18\x01 \x01(\t\x12\x15\n\rartifact_hash\x18\x02 \x01(\t\x12\x62\n\x14provider_credentials\x18\x03 \x03(\x0b\x32\x44.daemon_runtime_api_v1.CreateTaskRunRequest.ProviderCredentialsEntry\x12\x17\n\x0fworkflow_run_id\x18\x04 \x01(\t\x12;\n\x0b\x64\x61taloaders\x18\x05 \x03(\x0b\x32&.daemon_runtime_api_v1.DataloaderEntry\x1a:\n\x18ProviderCredentialsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01"\x92\x01\n\x07TaskRun\x12\n\n\x02id\x18\x01 \x01(\t\x12\x35\n\x06status\x18\x02 \x01(\x0e\x32%.daemon_runtime_api_v1.TaskRun.Status"D\n\x06Status\x12\x0b\n\x07UNKNOWN\x10\x00\x12\x0b\n\x07PENDING\x10\x01\x12\x0b\n\x07RUNNING\x10\x02\x12\x08\n\x04\x44ONE\x10\x03\x12\t\n\x05\x45RROR\x10\x04"(\n\x11GetTaskRunRequest\x12\x13\n\x0btask_run_id\x18\x01 \x01(\t"[\n\x15\x43reateArtifactRequest\x12\x31\n\x0btask_run_id\x18\x01 \x01(\x0b\x32\x1c.google.protobuf.StringValue\x12\x0f\n\x07payload\x18\x02 \x01(\x0c"+\n\x14ListArtifactsRequest\x12\x13\n\x0btask_run_id\x18\x01 \x01(\t"0\n\x17\x44ownloadArtifactRequest\x12\x15\n\rartifact_hash\x18\x01 \x01(\t"\x18\n\x08\x41rtifact\x12\x0c\n\x04hash\x18\x01 \x01(\t""\n\x0f\x41rtifactPayload\x12\x0f\n\x07payload\x18\x01 \x01(\x0c"K\n\x15ListArtifactsResponse\x12\x32\n\tartifacts\x18\x01 \x03(\x0b\x32\x1f.daemon_runtime_api_v1.Artifact"n\n\x12ResourceAssignment\x12\x11\n\ttask_hash\x18\x01 \x01(\t\x12\x19\n\x11resource_provider\x18\x02 \x01(\t\x12\x15\n\rresource_name\x18\x03 \x01(\t\x12\x13\n\x0bworker_hash\x18\x04 \x01(\t2\x84\x07\n\x03\x41pi\x12X\n\x0eGetServiceInfo\x12\x16.google.protobuf.Empty\x1a!.daemon_runtime_api_v1.DaemonInfo"\x0b\x82\xd3\xe4\x93\x02\x05\x12\x03/v1\x12\x99\x01\n\x18\x43reateResourceAssignment\x12\x36.daemon_runtime_api_v1.CreateResourceAssignmentRequest\x1a).daemon_runtime_api_v1.ResourceAssignment"\x1a\x82\xd3\xe4\x93\x02\x14"\x0f/v1/assignments:\x01*\x12v\n\rCreateTaskRun\x12+.daemon_runtime_api_v1.CreateTaskRunRequest\x1a\x1e.daemon_runtime_api_v1.TaskRun"\x18\x82\xd3\xe4\x93\x02\x12"\r/v1/task_runs:\x01*\x12|\n\nGetTaskRun\x12(.daemon_runtime_api_v1.GetTaskRunRequest\x1a\x1e.daemon_runtime_api_v1.TaskRun"$\x82\xd3\xe4\x93\x02\x1e\x12\x1c/v1/tasks_runs/{task_run_id}\x12y\n\x0e\x43reateArtifact\x12,.daemon_runtime_api_v1.CreateArtifactRequest\x1a\x1f.daemon_runtime_api_v1.Artifact"\x18\x82\xd3\xe4\x93\x02\x12"\r/v1/artifacts:\x01*\x12\x91\x01\n\x10\x44ownloadArtifact\x12..daemon_runtime_api_v1.DownloadArtifactRequest\x1a&.daemon_runtime_api_v1.ArtifactPayload"%\x82\xd3\xe4\x93\x02\x1f\x12\x1d/v1/artifacts/{artifact_hash}\x12\x81\x01\n\rListArtifacts\x12+.daemon_runtime_api_v1.ListArtifactsRequest\x1a,.daemon_runtime_api_v1.ListArtifactsResponse"\x15\x82\xd3\xe4\x93\x02\x0f\x12\r/v1/artifactsB0Z.internal/server/protobuf/daemon_runtime_api_v1b\x06proto3'
 )
 
 _globals = globals()
@@ -47,10 +47,6 @@ if not _descriptor._USE_C_DESCRIPTORS:
     _globals["_API"].methods_by_name[
         "GetServiceInfo"
     ]._serialized_options = b"\202\323\344\223\002\005\022\003/v1"
-    _globals["_API"].methods_by_name["CreateWorkerEntry"]._loaded_options = None
-    _globals["_API"].methods_by_name[
-        "CreateWorkerEntry"
-    ]._serialized_options = b'\202\323\344\223\002\020"\013/v1/workers:\001*'
     _globals["_API"].methods_by_name["CreateResourceAssignment"]._loaded_options = None
     _globals["_API"].methods_by_name[
         "CreateResourceAssignment"
@@ -81,40 +77,36 @@ if not _descriptor._USE_C_DESCRIPTORS:
     ]._serialized_options = b"\202\323\344\223\002\017\022\r/v1/artifacts"
     _globals["_DAEMONINFO"]._serialized_start = 145
     _globals["_DAEMONINFO"]._serialized_end = 188
-    _globals["_CREATEWORKERENTRYREQUEST"]._serialized_start = 190
-    _globals["_CREATEWORKERENTRYREQUEST"]._serialized_end = 284
-    _globals["_CREATERESOURCEASSIGNMENTREQUEST"]._serialized_start = 286
-    _globals["_CREATERESOURCEASSIGNMENTREQUEST"]._serialized_end = 388
-    _globals["_DATALOADERENTRY"]._serialized_start = 391
-    _globals["_DATALOADERENTRY"]._serialized_end = 597
-    _globals["_DATALOADERENTRY_CREDENTIALSENTRY"]._serialized_start = 547
-    _globals["_DATALOADERENTRY_CREDENTIALSENTRY"]._serialized_end = 597
-    _globals["_CREATETASKRUNREQUEST"]._serialized_start = 600
-    _globals["_CREATETASKRUNREQUEST"]._serialized_end = 910
-    _globals["_CREATETASKRUNREQUEST_PROVIDERCREDENTIALSENTRY"]._serialized_start = 852
-    _globals["_CREATETASKRUNREQUEST_PROVIDERCREDENTIALSENTRY"]._serialized_end = 910
-    _globals["_TASKRUN"]._serialized_start = 913
-    _globals["_TASKRUN"]._serialized_end = 1059
-    _globals["_TASKRUN_STATUS"]._serialized_start = 991
-    _globals["_TASKRUN_STATUS"]._serialized_end = 1059
-    _globals["_GETTASKRUNREQUEST"]._serialized_start = 1061
-    _globals["_GETTASKRUNREQUEST"]._serialized_end = 1101
-    _globals["_CREATEARTIFACTREQUEST"]._serialized_start = 1103
-    _globals["_CREATEARTIFACTREQUEST"]._serialized_end = 1194
-    _globals["_LISTARTIFACTSREQUEST"]._serialized_start = 1196
-    _globals["_LISTARTIFACTSREQUEST"]._serialized_end = 1239
-    _globals["_DOWNLOADARTIFACTREQUEST"]._serialized_start = 1241
-    _globals["_DOWNLOADARTIFACTREQUEST"]._serialized_end = 1289
-    _globals["_ARTIFACT"]._serialized_start = 1291
-    _globals["_ARTIFACT"]._serialized_end = 1315
-    _globals["_ARTIFACTPAYLOAD"]._serialized_start = 1317
-    _globals["_ARTIFACTPAYLOAD"]._serialized_end = 1351
-    _globals["_LISTARTIFACTSRESPONSE"]._serialized_start = 1353
-    _globals["_LISTARTIFACTSRESPONSE"]._serialized_end = 1428
-    _globals["_RESOURCEASSIGNMENT"]._serialized_start = 1430
-    _globals["_RESOURCEASSIGNMENT"]._serialized_end = 1519
-    _globals["_WORKERENTRY"]._serialized_start = 1521
-    _globals["_WORKERENTRY"]._serialized_end = 1602
-    _globals["_API"]._serialized_start = 1605
-    _globals["_API"]._serialized_end = 2636
+    _globals["_CREATERESOURCEASSIGNMENTREQUEST"]._serialized_start = 191
+    _globals["_CREATERESOURCEASSIGNMENTREQUEST"]._serialized_end = 344
+    _globals["_DATALOADERENTRY"]._serialized_start = 347
+    _globals["_DATALOADERENTRY"]._serialized_end = 553
+    _globals["_DATALOADERENTRY_CREDENTIALSENTRY"]._serialized_start = 503
+    _globals["_DATALOADERENTRY_CREDENTIALSENTRY"]._serialized_end = 553
+    _globals["_CREATETASKRUNREQUEST"]._serialized_start = 556
+    _globals["_CREATETASKRUNREQUEST"]._serialized_end = 866
+    _globals["_CREATETASKRUNREQUEST_PROVIDERCREDENTIALSENTRY"]._serialized_start = 808
+    _globals["_CREATETASKRUNREQUEST_PROVIDERCREDENTIALSENTRY"]._serialized_end = 866
+    _globals["_TASKRUN"]._serialized_start = 869
+    _globals["_TASKRUN"]._serialized_end = 1015
+    _globals["_TASKRUN_STATUS"]._serialized_start = 947
+    _globals["_TASKRUN_STATUS"]._serialized_end = 1015
+    _globals["_GETTASKRUNREQUEST"]._serialized_start = 1017
+    _globals["_GETTASKRUNREQUEST"]._serialized_end = 1057
+    _globals["_CREATEARTIFACTREQUEST"]._serialized_start = 1059
+    _globals["_CREATEARTIFACTREQUEST"]._serialized_end = 1150
+    _globals["_LISTARTIFACTSREQUEST"]._serialized_start = 1152
+    _globals["_LISTARTIFACTSREQUEST"]._serialized_end = 1195
+    _globals["_DOWNLOADARTIFACTREQUEST"]._serialized_start = 1197
+    _globals["_DOWNLOADARTIFACTREQUEST"]._serialized_end = 1245
+    _globals["_ARTIFACT"]._serialized_start = 1247
+    _globals["_ARTIFACT"]._serialized_end = 1271
+    _globals["_ARTIFACTPAYLOAD"]._serialized_start = 1273
+    _globals["_ARTIFACTPAYLOAD"]._serialized_end = 1307
+    _globals["_LISTARTIFACTSRESPONSE"]._serialized_start = 1309
+    _globals["_LISTARTIFACTSRESPONSE"]._serialized_end = 1384
+    _globals["_RESOURCEASSIGNMENT"]._serialized_start = 1386
+    _globals["_RESOURCEASSIGNMENT"]._serialized_end = 1496
+    _globals["_API"]._serialized_start = 1499
+    _globals["_API"]._serialized_end = 2399
 # @@protoc_insertion_point(module_scope)

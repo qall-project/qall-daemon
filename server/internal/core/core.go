@@ -18,7 +18,6 @@ type DaemonCore struct {
 	taskStore            datastore.MetadataStore
 	artifactStore        blockstores.BlockStore
 	runtime              runtime.Runtime
-	workers              []*object.WorkerEntry
 	resourceAssignments  map[string]*object.ResourceAssignment
 	watchdog             watchdog.WatchDog
 	// runDataloaders caches each workflow run's dataloader entries (grouped by

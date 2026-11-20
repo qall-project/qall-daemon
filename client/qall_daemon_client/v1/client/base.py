@@ -41,11 +41,6 @@ class DaemonClient(ABC):
     def get_task_run(self, task_run_id: str) -> TaskRun:
         raise NotImplementedError
 
-    def create_worker_entry(
-        self, worker_hash: str, worker_provider: str, input_format: str
-    ) -> WorkerEntry:
-        raise NotImplementedError
-
     def create_artifact(
         self,
         task_run_id: str,
