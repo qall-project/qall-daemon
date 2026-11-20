@@ -71,8 +71,9 @@ func (e *DaemonCore) RunTask(
 
 	if exists {
 		providerName = assignment.ResourceProvider
-		resourceName = assignment.ResourceName
+		resourceName = assignment.ResourceNames[0]
 		workerHash = assignment.WorkerHash
+
 		providerCredentials["target_resource"] = resourceName
 	}
 

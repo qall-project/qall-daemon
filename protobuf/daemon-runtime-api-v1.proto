@@ -62,7 +62,7 @@ message DaemonInfo {
 message CreateResourceAssignmentRequest {
   string task_hash = 1;
   string resource_provider = 2;
-  string resource_name = 3;
+  repeated string resource_names = 3;
   google.protobuf.StringValue worker_hash = 4;
 }
 
@@ -140,6 +140,6 @@ message ListArtifactsResponse {
 message ResourceAssignment {
   string task_hash = 1;
   string resource_provider = 2;
-  string resource_name = 3;
+  repeated string resource_names = 3;
   string worker_hash = 4;
 }

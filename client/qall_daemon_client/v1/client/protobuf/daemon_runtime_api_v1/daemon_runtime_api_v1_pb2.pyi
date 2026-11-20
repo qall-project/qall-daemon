@@ -26,20 +26,20 @@ class DaemonInfo(_message.Message):
     ) -> None: ...
 
 class CreateResourceAssignmentRequest(_message.Message):
-    __slots__ = ("task_hash", "resource_provider", "resource_name", "worker_hash")
+    __slots__ = ("task_hash", "resource_provider", "resource_names", "worker_hash")
     TASK_HASH_FIELD_NUMBER: _ClassVar[int]
     RESOURCE_PROVIDER_FIELD_NUMBER: _ClassVar[int]
-    RESOURCE_NAME_FIELD_NUMBER: _ClassVar[int]
+    RESOURCE_NAMES_FIELD_NUMBER: _ClassVar[int]
     WORKER_HASH_FIELD_NUMBER: _ClassVar[int]
     task_hash: str
     resource_provider: str
-    resource_name: str
+    resource_names: _containers.RepeatedScalarFieldContainer[str]
     worker_hash: _wrappers_pb2.StringValue
     def __init__(
         self,
         task_hash: _Optional[str] = ...,
         resource_provider: _Optional[str] = ...,
-        resource_name: _Optional[str] = ...,
+        resource_names: _Optional[_Iterable[str]] = ...,
         worker_hash: _Optional[_Union[_wrappers_pb2.StringValue, _Mapping]] = ...,
     ) -> None: ...
 
@@ -190,19 +190,19 @@ class ListArtifactsResponse(_message.Message):
     ) -> None: ...
 
 class ResourceAssignment(_message.Message):
-    __slots__ = ("task_hash", "resource_provider", "resource_name", "worker_hash")
+    __slots__ = ("task_hash", "resource_provider", "resource_names", "worker_hash")
     TASK_HASH_FIELD_NUMBER: _ClassVar[int]
     RESOURCE_PROVIDER_FIELD_NUMBER: _ClassVar[int]
-    RESOURCE_NAME_FIELD_NUMBER: _ClassVar[int]
+    RESOURCE_NAMES_FIELD_NUMBER: _ClassVar[int]
     WORKER_HASH_FIELD_NUMBER: _ClassVar[int]
     task_hash: str
     resource_provider: str
-    resource_name: str
+    resource_names: _containers.RepeatedScalarFieldContainer[str]
     worker_hash: str
     def __init__(
         self,
         task_hash: _Optional[str] = ...,
         resource_provider: _Optional[str] = ...,
-        resource_name: _Optional[str] = ...,
+        resource_names: _Optional[_Iterable[str]] = ...,
         worker_hash: _Optional[str] = ...,
     ) -> None: ...

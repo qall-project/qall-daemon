@@ -29,9 +29,9 @@ func (s *ApiV1Server) GetServiceInfo(ctx context.Context, in *emptypb.Empty) (*p
 }
 
 func (s *ApiV1Server) CreateResourceAssignment(ctx context.Context, req *pbDaemon.CreateResourceAssignmentRequest) (*pbDaemon.ResourceAssignment, error) {
-	log.Println("Request received: CreateResourceAssignment:", req.GetResourceProvider(), req.GetResourceName())
+	log.Println("Request received: CreateResourceAssignment:", req.GetResourceProvider(), req.GetResourceNames())
 
-	ra, err := s.core.CreateResourceAssignment(ctx, req.GetResourceProvider(), req.GetTaskHash(), req.GetWorkerHash().GetValue(), req.GetResourceName())
+	ra, err := s.core.CreateResourceAssignment(ctx, req.GetResourceProvider(), req.GetTaskHash(), req.GetWorkerHash().GetValue(), req.GetResourceNames())
 
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func (s *ApiV1Server) CreateResourceAssignment(ctx context.Context, req *pbDaemo
 	return &pbDaemon.ResourceAssignment{
 		ResourceProvider: ra.ResourceProvider,
 		TaskHash:         ra.TaskHash,
-		ResourceName:     ra.ResourceName,
+		ResourceNames:    ra.ResourceNames,
 		WorkerHash:       ra.WorkerHash,
 	}, nil
 }

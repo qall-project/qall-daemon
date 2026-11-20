@@ -32,7 +32,6 @@ from qall_daemon_client.v1.objects import (
     DaemonInfo,
     TaskRun,
     TaskRunStatus,
-    WorkerEntry,
     ResourceAssignment,
 )
 
@@ -78,12 +77,16 @@ class GrpcDaemonClient(DaemonClient):
         return DaemonInfo(name=response.name, version=response.version)
 
     def create_resource_assignment(
-        self, task_hash: str, resource_provider: str, resource_name: str, worker_hash: Optional[str] = None
+        self,
+        task_hash: str,
+        resource_provider: str,
+        resource_names: list[str],
+        worker_hash: Optional[str] = None,
     ) -> ResourceAssignment:
         request = pb2.CreateResourceAssignmentRequest(
             task_hash=task_hash,
             resource_provider=resource_provider,
-            resource_name=resource_name,
+            resource_names=resource_names,
             worker_hash=worker_hash,
         )
 
@@ -92,7 +95,7 @@ class GrpcDaemonClient(DaemonClient):
         return ResourceAssignment(
             task_hash=response.task_hash,
             resource_provider=response.resource_provider,
-            resource_name=response.resource_name,
+            resource_names=response.resource_names,
             worker_hash=response.worker_hash,
         )
 

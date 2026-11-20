@@ -164,8 +164,6 @@ func (m *CreateResourceAssignmentRequest) validate(all bool) error {
 
 	// no validation rules for ResourceProvider
 
-	// no validation rules for ResourceName
-
 	if all {
 		switch v := interface{}(m.GetWorkerHash()).(type) {
 		case interface{ ValidateAll() error }:
@@ -1441,8 +1439,6 @@ func (m *ResourceAssignment) validate(all bool) error {
 	// no validation rules for TaskHash
 
 	// no validation rules for ResourceProvider
-
-	// no validation rules for ResourceName
 
 	// no validation rules for WorkerHash
 

@@ -202,8 +202,10 @@ components:
                     type: string
                 resourceProvider:
                     type: string
-                resourceName:
-                    type: string
+                resourceNames:
+                    type: array
+                    items:
+                        type: string
                 workerHash:
                     nullable: true
                     type: string
@@ -272,8 +274,10 @@ components:
                     type: string
                 resourceProvider:
                     type: string
-                resourceName:
-                    type: string
+                resourceNames:
+                    type: array
+                    items:
+                        type: string
                 workerHash:
                     type: string
         Status:
