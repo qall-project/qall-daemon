@@ -25,34 +25,22 @@ class DaemonInfo(_message.Message):
         self, name: _Optional[str] = ..., version: _Optional[str] = ...
     ) -> None: ...
 
-class CreateWorkerEntryRequest(_message.Message):
-    __slots__ = ("worker_hash", "worker_provider", "input_format")
-    WORKER_HASH_FIELD_NUMBER: _ClassVar[int]
-    WORKER_PROVIDER_FIELD_NUMBER: _ClassVar[int]
-    INPUT_FORMAT_FIELD_NUMBER: _ClassVar[int]
-    worker_hash: str
-    worker_provider: str
-    input_format: str
-    def __init__(
-        self,
-        worker_hash: _Optional[str] = ...,
-        worker_provider: _Optional[str] = ...,
-        input_format: _Optional[str] = ...,
-    ) -> None: ...
-
 class CreateResourceAssignmentRequest(_message.Message):
-    __slots__ = ("task_hash", "resource_provider", "resource_name")
+    __slots__ = ("task_hash", "resource_provider", "resource_names", "worker_hash")
     TASK_HASH_FIELD_NUMBER: _ClassVar[int]
     RESOURCE_PROVIDER_FIELD_NUMBER: _ClassVar[int]
-    RESOURCE_NAME_FIELD_NUMBER: _ClassVar[int]
+    RESOURCE_NAMES_FIELD_NUMBER: _ClassVar[int]
+    WORKER_HASH_FIELD_NUMBER: _ClassVar[int]
     task_hash: str
     resource_provider: str
-    resource_name: str
+    resource_names: _containers.RepeatedScalarFieldContainer[str]
+    worker_hash: _wrappers_pb2.StringValue
     def __init__(
         self,
         task_hash: _Optional[str] = ...,
         resource_provider: _Optional[str] = ...,
-        resource_name: _Optional[str] = ...,
+        resource_names: _Optional[_Iterable[str]] = ...,
+        worker_hash: _Optional[_Union[_wrappers_pb2.StringValue, _Mapping]] = ...,
     ) -> None: ...
 
 class DataloaderEntry(_message.Message):
@@ -202,31 +190,19 @@ class ListArtifactsResponse(_message.Message):
     ) -> None: ...
 
 class ResourceAssignment(_message.Message):
-    __slots__ = ("task_hash", "resource_provider", "resource_name")
+    __slots__ = ("task_hash", "resource_provider", "resource_names", "worker_hash")
     TASK_HASH_FIELD_NUMBER: _ClassVar[int]
     RESOURCE_PROVIDER_FIELD_NUMBER: _ClassVar[int]
-    RESOURCE_NAME_FIELD_NUMBER: _ClassVar[int]
+    RESOURCE_NAMES_FIELD_NUMBER: _ClassVar[int]
+    WORKER_HASH_FIELD_NUMBER: _ClassVar[int]
     task_hash: str
     resource_provider: str
-    resource_name: str
+    resource_names: _containers.RepeatedScalarFieldContainer[str]
+    worker_hash: str
     def __init__(
         self,
         task_hash: _Optional[str] = ...,
         resource_provider: _Optional[str] = ...,
-        resource_name: _Optional[str] = ...,
-    ) -> None: ...
-
-class WorkerEntry(_message.Message):
-    __slots__ = ("worker_hash", "worker_provider", "input_format")
-    WORKER_HASH_FIELD_NUMBER: _ClassVar[int]
-    WORKER_PROVIDER_FIELD_NUMBER: _ClassVar[int]
-    INPUT_FORMAT_FIELD_NUMBER: _ClassVar[int]
-    worker_hash: str
-    worker_provider: str
-    input_format: str
-    def __init__(
-        self,
+        resource_names: _Optional[_Iterable[str]] = ...,
         worker_hash: _Optional[str] = ...,
-        worker_provider: _Optional[str] = ...,
-        input_format: _Optional[str] = ...,
     ) -> None: ...

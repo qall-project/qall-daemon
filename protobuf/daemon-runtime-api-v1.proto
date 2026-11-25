@@ -14,13 +14,6 @@ service Api {
     option (google.api.http) = {get: "/v1"};
   }
 
-  rpc CreateWorkerEntry(CreateWorkerEntryRequest) returns (WorkerEntry) {
-    option (google.api.http) = {
-      post: "/v1/workers"
-      body: "*"
-    };
-  }
-
   rpc CreateResourceAssignment(CreateResourceAssignmentRequest) returns (ResourceAssignment) {
     option (google.api.http) = {
       post: "/v1/assignments"
@@ -66,16 +59,11 @@ message DaemonInfo {
   string version = 2;
 }
 
-message CreateWorkerEntryRequest {
-  string worker_hash = 1;
-  string worker_provider = 2;
-  string input_format = 3;
-}
-
 message CreateResourceAssignmentRequest {
   string task_hash = 1;
   string resource_provider = 2;
-  string resource_name = 3;
+  repeated string resource_names = 3;
+  google.protobuf.StringValue worker_hash = 4;
 }
 
 message DataloaderEntry {
@@ -152,11 +140,6 @@ message ListArtifactsResponse {
 message ResourceAssignment {
   string task_hash = 1;
   string resource_provider = 2;
-  string resource_name = 3;
-}
-
-message WorkerEntry {
-  string worker_hash = 1;
-  string worker_provider = 2;
-  string input_format = 3;
+  repeated string resource_names = 3;
+  string worker_hash = 4;
 }

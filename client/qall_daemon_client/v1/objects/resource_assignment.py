@@ -17,5 +17,6 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class ResourceAssignment:
     task_hash: str
+    worker_hash: str
     resource_provider: str
-    resource_name: str
+    resource_names: list[str]

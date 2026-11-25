@@ -138,114 +138,6 @@ var _ interface {
 	ErrorName() string
 } = DaemonInfoValidationError{}
 
-// Validate checks the field values on CreateWorkerEntryRequest with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *CreateWorkerEntryRequest) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on CreateWorkerEntryRequest with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// CreateWorkerEntryRequestMultiError, or nil if none found.
-func (m *CreateWorkerEntryRequest) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *CreateWorkerEntryRequest) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	// no validation rules for WorkerHash
-
-	// no validation rules for WorkerProvider
-
-	// no validation rules for InputFormat
-
-	if len(errors) > 0 {
-		return CreateWorkerEntryRequestMultiError(errors)
-	}
-
-	return nil
-}
-
-// CreateWorkerEntryRequestMultiError is an error wrapping multiple validation
-// errors returned by CreateWorkerEntryRequest.ValidateAll() if the designated
-// constraints aren't met.
-type CreateWorkerEntryRequestMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m CreateWorkerEntryRequestMultiError) Error() string {
-	var msgs []string
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m CreateWorkerEntryRequestMultiError) AllErrors() []error { return m }
-
-// CreateWorkerEntryRequestValidationError is the validation error returned by
-// CreateWorkerEntryRequest.Validate if the designated constraints aren't met.
-type CreateWorkerEntryRequestValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e CreateWorkerEntryRequestValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e CreateWorkerEntryRequestValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e CreateWorkerEntryRequestValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e CreateWorkerEntryRequestValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e CreateWorkerEntryRequestValidationError) ErrorName() string {
-	return "CreateWorkerEntryRequestValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e CreateWorkerEntryRequestValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sCreateWorkerEntryRequest.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = CreateWorkerEntryRequestValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = CreateWorkerEntryRequestValidationError{}
-
 // Validate checks the field values on CreateResourceAssignmentRequest with the
 // rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -272,7 +164,34 @@ func (m *CreateResourceAssignmentRequest) validate(all bool) error {
 
 	// no validation rules for ResourceProvider
 
-	// no validation rules for ResourceName
+	if all {
+		switch v := interface{}(m.GetWorkerHash()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CreateResourceAssignmentRequestValidationError{
+					field:  "WorkerHash",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CreateResourceAssignmentRequestValidationError{
+					field:  "WorkerHash",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWorkerHash()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CreateResourceAssignmentRequestValidationError{
+				field:  "WorkerHash",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	if len(errors) > 0 {
 		return CreateResourceAssignmentRequestMultiError(errors)
@@ -1521,7 +1440,7 @@ func (m *ResourceAssignment) validate(all bool) error {
 
 	// no validation rules for ResourceProvider
 
-	// no validation rules for ResourceName
+	// no validation rules for WorkerHash
 
 	if len(errors) > 0 {
 		return ResourceAssignmentMultiError(errors)
@@ -1602,108 +1521,3 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ResourceAssignmentValidationError{}
-
-// Validate checks the field values on WorkerEntry with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *WorkerEntry) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on WorkerEntry with the rules defined in
-// the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in WorkerEntryMultiError, or
-// nil if none found.
-func (m *WorkerEntry) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *WorkerEntry) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	// no validation rules for WorkerHash
-
-	// no validation rules for WorkerProvider
-
-	// no validation rules for InputFormat
-
-	if len(errors) > 0 {
-		return WorkerEntryMultiError(errors)
-	}
-
-	return nil
-}
-
-// WorkerEntryMultiError is an error wrapping multiple validation errors
-// returned by WorkerEntry.ValidateAll() if the designated constraints aren't met.
-type WorkerEntryMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m WorkerEntryMultiError) Error() string {
-	var msgs []string
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m WorkerEntryMultiError) AllErrors() []error { return m }
-
-// WorkerEntryValidationError is the validation error returned by
-// WorkerEntry.Validate if the designated constraints aren't met.
-type WorkerEntryValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e WorkerEntryValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e WorkerEntryValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e WorkerEntryValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e WorkerEntryValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e WorkerEntryValidationError) ErrorName() string { return "WorkerEntryValidationError" }
-
-// Error satisfies the builtin error interface
-func (e WorkerEntryValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sWorkerEntry.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = WorkerEntryValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = WorkerEntryValidationError{}

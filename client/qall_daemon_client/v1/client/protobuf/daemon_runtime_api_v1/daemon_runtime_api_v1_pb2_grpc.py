@@ -44,12 +44,6 @@ class ApiStub(object):
             response_deserializer=daemon__runtime__api__v1__pb2.DaemonInfo.FromString,
             _registered_method=True,
         )
-        self.CreateWorkerEntry = channel.unary_unary(
-            "/daemon_runtime_api_v1.Api/CreateWorkerEntry",
-            request_serializer=daemon__runtime__api__v1__pb2.CreateWorkerEntryRequest.SerializeToString,
-            response_deserializer=daemon__runtime__api__v1__pb2.WorkerEntry.FromString,
-            _registered_method=True,
-        )
         self.CreateResourceAssignment = channel.unary_unary(
             "/daemon_runtime_api_v1.Api/CreateResourceAssignment",
             request_serializer=daemon__runtime__api__v1__pb2.CreateResourceAssignmentRequest.SerializeToString,
@@ -92,12 +86,6 @@ class ApiServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def GetServiceInfo(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details("Method not implemented!")
-        raise NotImplementedError("Method not implemented!")
-
-    def CreateWorkerEntry(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details("Method not implemented!")
@@ -146,11 +134,6 @@ def add_ApiServicer_to_server(servicer, server):
             servicer.GetServiceInfo,
             request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
             response_serializer=daemon__runtime__api__v1__pb2.DaemonInfo.SerializeToString,
-        ),
-        "CreateWorkerEntry": grpc.unary_unary_rpc_method_handler(
-            servicer.CreateWorkerEntry,
-            request_deserializer=daemon__runtime__api__v1__pb2.CreateWorkerEntryRequest.FromString,
-            response_serializer=daemon__runtime__api__v1__pb2.WorkerEntry.SerializeToString,
         ),
         "CreateResourceAssignment": grpc.unary_unary_rpc_method_handler(
             servicer.CreateResourceAssignment,
@@ -215,36 +198,6 @@ class Api(object):
             "/daemon_runtime_api_v1.Api/GetServiceInfo",
             google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
             daemon__runtime__api__v1__pb2.DaemonInfo.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True,
-        )
-
-    @staticmethod
-    def CreateWorkerEntry(
-        request,
-        target,
-        options=(),
-        channel_credentials=None,
-        call_credentials=None,
-        insecure=False,
-        compression=None,
-        wait_for_ready=None,
-        timeout=None,
-        metadata=None,
-    ):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            "/daemon_runtime_api_v1.Api/CreateWorkerEntry",
-            daemon__runtime__api__v1__pb2.CreateWorkerEntryRequest.SerializeToString,
-            daemon__runtime__api__v1__pb2.WorkerEntry.FromString,
             options,
             channel_credentials,
             insecure,

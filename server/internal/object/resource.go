@@ -2,6 +2,7 @@ package object
 
 type ResourceAssignment struct {
 	ResourceProvider string
-	ResourceName     string
+	ResourceNames    []string
 	TaskHash         string
+	WorkerHash       string
 }

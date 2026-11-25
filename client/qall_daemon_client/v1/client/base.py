@@ -16,7 +16,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import Optional
 
-from qall_daemon_client.v1.objects import DaemonInfo, TaskRun, Artifact, WorkerEntry
+from qall_daemon_client.v1.objects import DaemonInfo, TaskRun, Artifact
 
 
 class DaemonClient(ABC):
@@ -39,11 +39,6 @@ class DaemonClient(ABC):
         raise NotImplementedError
 
     def get_task_run(self, task_run_id: str) -> TaskRun:
-        raise NotImplementedError
-
-    def create_worker_entry(
-        self, worker_hash: str, worker_provider: str, input_format: str
-    ) -> WorkerEntry:
         raise NotImplementedError
 
     def create_artifact(

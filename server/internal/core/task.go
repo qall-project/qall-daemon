@@ -62,6 +62,7 @@ func (e *DaemonCore) RunTask(
 
 	providerName := "local"
 	resourceName := "local"
+	workerHash := ""
 	assignment, exists := e.resourceAssignments[taskHash]
 
 	if providerCredentials == nil {
@@ -70,37 +71,39 @@ func (e *DaemonCore) RunTask(
 
 	if exists {
 		providerName = assignment.ResourceProvider
-		resourceName = assignment.ResourceName
-		providerCredentials["target_resource"] = resourceName
+		workerHash = assignment.WorkerHash
+
+		if len(assignment.ResourceNames) > 0 {
+			resourceName = assignment.ResourceNames[0]
+			providerCredentials["target_resource"] = resourceName
+		}
 	}
 
 	envVariables := e.buildProviderEnvVars(providerName, providerCredentials)
 
-	workerRuns, err := e.startQuantumWorkers(
-		ctx,
-		taskPayload.QuantumRunInputFormats,
-		taskRun.Id,
-		envVariables,
-		providerName,
-	)
-
-	if err != nil {
-		_ = e.taskStore.DeleteTaskRun(ctx, taskRun.Id)
-
-		return nil, fmt.Errorf(
-			"failed to start quantum workers: %w",
-			err,
-		)
-	}
-
 	token := uuid.New().String()
-
 	workerAddresses := []string{}
+	var workerRun *object.WorkerRun
 
-	if workerRuns != nil && len(workerRuns) > 0 {
-		for _, w := range workerRuns {
-			workerAddresses = append(workerAddresses, w.Address)
+	if workerHash != "" {
+		workerRun, err = e.startQuantumWorker(
+			ctx,
+			workerHash,
+			taskRun.Id,
+			envVariables,
+			providerName,
+		)
+
+		if err != nil {
+			_ = e.taskStore.DeleteTaskRun(ctx, taskRun.Id)
+
+			return nil, fmt.Errorf(
+				"failed to start quantum worker: %w",
+				err,
+			)
 		}
+
+		workerAddresses = append(workerAddresses, workerRun.Address)
 	}
 
 	taskRuntimeArgs := object.TaskRuntimeArgs{
@@ -123,7 +126,9 @@ func (e *DaemonCore) RunTask(
 	)
 
 	if err != nil {
-		e.stopWorkerRuns(ctx, workerRuns)
+		if workerRun != nil {
+			e.stopWorkerRun(ctx, workerRun)
+		}
 
 		_ = e.taskStore.DeleteTaskRun(
 			ctx,
@@ -144,7 +149,10 @@ func (e *DaemonCore) RunTask(
 		taskRun,
 	); err != nil {
 		e.runtime.Stop(ctx, containerID)
-		e.stopWorkerRuns(ctx, workerRuns)
+
+		if workerRun != nil {
+			e.stopWorkerRun(ctx, workerRun)
+		}
 
 		return nil, fmt.Errorf(
 			"failed to persist task container: %w",
@@ -176,8 +184,8 @@ func (e *DaemonCore) GetTaskStatus(ctx context.Context, taskRunId string) (*obje
 		tokenFilename := fmt.Sprintf("%s.token", taskRunId)
 		tokenPath := filepath.Join(runtime.HostSecretsDir, tokenFilename)
 
-		if err := os.Remove(tokenPath); err != nil {
-			return nil, fmt.Errorf("token file %s for task run ID %s not found", tokenPath, taskRunId)
+		if err := os.Remove(tokenPath); err != nil && !os.IsNotExist(err) {
+			return nil, fmt.Errorf("failed to remove token file %s for task run ID %s: %w", tokenPath, taskRunId, err)
 		}
 
 		dataloadersFilename := fmt.Sprintf("%s.dataloaders.json", taskRunId)

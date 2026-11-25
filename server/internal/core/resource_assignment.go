@@ -9,11 +9,13 @@ import (
 func (e *DaemonCore) CreateResourceAssignment(ctx context.Context,
 	resourceProvider string,
 	taskHash string,
-	resourceName string) (*object.ResourceAssignment, error) {
+	workerHash string,
+	resourceNames []string) (*object.ResourceAssignment, error) {
 	assignment := &object.ResourceAssignment{
 		ResourceProvider: resourceProvider,
 		TaskHash:         taskHash,
-		ResourceName:     resourceName,
+		WorkerHash:       workerHash,
+		ResourceNames:    resourceNames,
 	}
 
 	e.resourceAssignments[taskHash] = assignment

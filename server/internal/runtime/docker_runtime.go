@@ -302,6 +302,8 @@ func (d *DockerRuntime) CreateImage(
 		dockerfile.WriteString("RUN uv python install 3.13\n")
 		dockerfile.WriteString(toolInstall + "\n")
 
+		log.Printf("[Docker-Build] Image dockerfile: %s", dockerfile.String())
+
 		buildCtx, err := createBuildContext(dockerfile.String(), qallSource)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create build context: %w", err)
@@ -568,13 +570,8 @@ func (d *DockerRuntime) StartWorker(ctx context.Context, imageTag string, args o
 		Name: containerName,
 		Config: &container.Config{
 			Image: imageTag,
-			Env: []string{
-				"PYTHONUNBUFFERED=1",
-				fmt.Sprintf("TASK_RUN_ID=%s", args.TaskRunId),
-				fmt.Sprintf("QALL_TOKEN_PATH=%s", workerTokenPath),
-				fmt.Sprintf("QALL_DAEMON_ADDRESS=%s", d.daemonAddr),
-			},
-			Cmd: cmd,
+			Env:   envVariables,
+			Cmd:   cmd,
 		},
 		HostConfig: &container.HostConfig{
 			Mounts:      mounts,

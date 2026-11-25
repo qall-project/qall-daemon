@@ -33,100 +33,78 @@ func (d *DaemonCore) startTask(ctx context.Context, args object.TaskRuntimeArgs)
 	return containerID, nil
 }
 
-func (e *DaemonCore) startQuantumWorkers(
+func (e *DaemonCore) startQuantumWorker(
 	ctx context.Context,
-	inputFormats []string,
 	taskRunId string,
+	workerHash string,
 	envVariables map[string]string,
 	workerProvider string,
-) ([]object.WorkerRun, error) {
-	if inputFormats == nil || len(inputFormats) == 0 {
-		return nil, nil
+) (*object.WorkerRun, error) {
+
+	log.Printf("[Core] Must start workers %s", workerHash)
+
+	workerRun := &object.WorkerRun{
+		TaskRunId: taskRunId,
 	}
 
-	workerRuns := make([]object.WorkerRun, 0, len(inputFormats))
+	workerRunId, err := e.taskStore.CreateWorkerRun(
+		ctx,
+		*workerRun,
+	)
 
-	for _, inputFormat := range inputFormats {
-		log.Printf("[Core] Must start workers for provider %s with format %s", workerProvider, inputFormat)
+	if err != nil {
+		e.stopWorkerRun(ctx, workerRun)
+		return nil, err
+	}
 
-		worker, err := e.findWorker(
-			workerProvider,
-			inputFormat,
-		)
+	workerRun.Id = workerRunId
 
-		if err != nil {
-			e.stopWorkerRuns(ctx, workerRuns)
-			return nil, err
-		}
+	containerId, address, err := e.startWorker(
+		ctx,
+		workerHash,
+		workerRunId,
+		taskRunId,
+		envVariables,
+	)
 
-		workerRun := object.WorkerRun{
-			TaskRunId: taskRunId,
-		}
+	if err != nil {
+		e.stopWorkerRun(ctx, workerRun)
 
-		workerRunId, err := e.taskStore.CreateWorkerRun(
-			ctx,
-			workerRun,
-		)
-
-		if err != nil {
-			e.stopWorkerRuns(ctx, workerRuns)
-			return nil, err
-		}
-
-		workerRun.Id = workerRunId
-
-		containerId, address, err := e.startWorker(
-			ctx,
-			worker,
-			workerRunId,
-			taskRunId,
-			envVariables,
-		)
-
-		if err != nil {
-			e.stopWorkerRuns(ctx, workerRuns)
-
-			return nil, fmt.Errorf(
-				"failed to start worker for input format %q: %w",
-				inputFormat,
-				err,
-			)
-		}
-
-		workerRun.ContainerId = containerId
-		workerRun.Address = address
-
-		_, err = e.taskStore.UpdateWorkerRun(
-			ctx,
-			workerRun,
-		)
-
-		workerRuns = append(
-			workerRuns,
-			workerRun,
+		return nil, fmt.Errorf(
+			"failed to start worker %s for input format %w",
+			workerHash,
+			err,
 		)
 	}
 
-	return workerRuns, nil
+	workerRun.ContainerId = containerId
+	workerRun.Address = address
+
+	_, err = e.taskStore.UpdateWorkerRun(
+		ctx,
+		*workerRun,
+	)
+
+	return workerRun, nil
 }
 
 func (e *DaemonCore) startWorker(
 	ctx context.Context,
-	worker *object.WorkerEntry,
+	workerHash string,
 	workerRunId string,
 	taskRunId string,
 	envVariables map[string]string,
 ) (string, string, error) {
 	workerPayload, err := getWorkerPayload(
 		ctx,
-		worker.WorkerHash,
+		workerHash,
 		e.registry,
 	)
 
 	if err != nil {
 		return "", "", fmt.Errorf(
 			"failed to resolve worker payload %s: %w",
-			worker.WorkerHash,
+			workerHash,
 			err,
 		)
 	}
@@ -152,19 +130,12 @@ func (e *DaemonCore) startWorker(
 		)
 	}
 
-	if err != nil {
-		return "", "", fmt.Errorf(
-			"failed to get available TCP port: %w",
-			err,
-		)
-	}
-
 	args := object.WorkerRuntimeArgs{
 		Payload:              workerPayload,
 		TaskRunId:            taskRunId,
 		Port:                 "50051",
 		HostBlockRegistryDir: e.hostBlockRegistryDir,
-		WorkerHash:           worker.WorkerHash,
+		WorkerHash:           workerHash,
 		WorkerRunId:          workerRunId,
 		Name:                 fmt.Sprintf("qall-worker-%s", workerRunId[:8]),
 		EnvironmentVariables: envVariables,
@@ -184,24 +155,6 @@ func (e *DaemonCore) startWorker(
 	}
 
 	return containerID, fmt.Sprintf("%s:%s", args.Name, args.Port), nil
-}
-
-func (e *DaemonCore) findWorker(
-	provider string,
-	inputFormat string,
-) (*object.WorkerEntry, error) {
-	for _, worker := range e.workers {
-		if worker.WorkerProvider == provider &&
-			worker.InputFormat == inputFormat {
-			return worker, nil
-		}
-	}
-
-	return nil, fmt.Errorf(
-		"no quantum worker registered for provider %q and input format %q",
-		provider,
-		inputFormat,
-	)
 }
 
 func (e *DaemonCore) watchTaskRun(ctx context.Context, taskRun object.TaskRun) {
@@ -254,9 +207,9 @@ func (e *DaemonCore) onTaskRunFinished(
 		return err
 	}
 
-	e.stopWorkerRuns(ctx, workers)
-
 	for _, worker := range workers {
+		e.stopWorkerRun(ctx, &worker)
+
 		if err := e.taskStore.DeleteWorkerRun(
 			ctx,
 			worker.Id,
@@ -274,26 +227,20 @@ func (e *DaemonCore) onTaskRunFinished(
 	return nil
 }
 
-func (e *DaemonCore) stopWorkerRuns(
+func (e *DaemonCore) stopWorkerRun(
 	ctx context.Context,
-	workers []object.WorkerRun,
+	worker *object.WorkerRun,
 ) error {
-	if workers == nil {
+	if worker == nil {
 		return nil
 	}
 
-	for _, worker := range workers {
-		err := e.runtime.Stop(
-			ctx,
-			worker.ContainerId,
-		)
+	err := e.runtime.Stop(
+		ctx,
+		worker.ContainerId,
+	)
 
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return err
 }
 
 func (e *DaemonCore) buildProviderEnvVars(providerName string, envs map[string]string) map[string]string {
