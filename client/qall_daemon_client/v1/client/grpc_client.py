@@ -87,7 +87,7 @@ class GrpcDaemonClient(DaemonClient):
             task_hash=task_hash,
             resource_provider=resource_provider,
             resource_names=resource_names,
-            worker_hash=worker_hash,
+            worker_hash=StringValue(value=worker_hash),
         )
 
         response = self.__stub.CreateResourceAssignment(request)
