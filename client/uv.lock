@@ -101,7 +101,7 @@ wheels = [
 
 [[package]]
 name = "qall-daemon-client"
-version = "0.1.1"
+version = "0.1.10"
 source = { editable = "." }
 dependencies = [
     { name = "dataclasses" },

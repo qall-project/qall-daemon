@@ -16,7 +16,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import Optional
 
-from qall_daemon_client.v1.objects import DaemonInfo, TaskRun, Artifact, WorkerEntry
+from qall_daemon_client.v1.objects import DaemonInfo, TaskRun, Artifact
 
 
 class DaemonClient(ABC):

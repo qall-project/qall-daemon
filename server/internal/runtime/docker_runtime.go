@@ -570,13 +570,8 @@ func (d *DockerRuntime) StartWorker(ctx context.Context, imageTag string, args o
 		Name: containerName,
 		Config: &container.Config{
 			Image: imageTag,
-			Env: []string{
-				"PYTHONUNBUFFERED=1",
-				fmt.Sprintf("TASK_RUN_ID=%s", args.TaskRunId),
-				fmt.Sprintf("QALL_TOKEN_PATH=%s", workerTokenPath),
-				fmt.Sprintf("QALL_DAEMON_ADDRESS=%s", d.daemonAddr),
-			},
-			Cmd: cmd,
+			Env:   envVariables,
+			Cmd:   cmd,
 		},
 		HostConfig: &container.HostConfig{
 			Mounts:      mounts,

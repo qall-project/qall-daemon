@@ -71,10 +71,12 @@ func (e *DaemonCore) RunTask(
 
 	if exists {
 		providerName = assignment.ResourceProvider
-		resourceName = assignment.ResourceNames[0]
 		workerHash = assignment.WorkerHash
 
-		providerCredentials["target_resource"] = resourceName
+		if len(assignment.ResourceNames) > 0 {
+			resourceName = assignment.ResourceNames[0]
+			providerCredentials["target_resource"] = resourceName
+		}
 	}
 
 	envVariables := e.buildProviderEnvVars(providerName, providerCredentials)
@@ -84,7 +86,7 @@ func (e *DaemonCore) RunTask(
 	var workerRun *object.WorkerRun
 
 	if workerHash != "" {
-		workerRun, err := e.startQuantumWorker(
+		workerRun, err = e.startQuantumWorker(
 			ctx,
 			workerHash,
 			taskRun.Id,
@@ -182,8 +184,8 @@ func (e *DaemonCore) GetTaskStatus(ctx context.Context, taskRunId string) (*obje
 		tokenFilename := fmt.Sprintf("%s.token", taskRunId)
 		tokenPath := filepath.Join(runtime.HostSecretsDir, tokenFilename)
 
-		if err := os.Remove(tokenPath); err != nil {
-			return nil, fmt.Errorf("token file %s for task run ID %s not found", tokenPath, taskRunId)
+		if err := os.Remove(tokenPath); err != nil && !os.IsNotExist(err) {
+			return nil, fmt.Errorf("failed to remove token file %s for task run ID %s: %w", tokenPath, taskRunId, err)
 		}
 
 		dataloadersFilename := fmt.Sprintf("%s.dataloaders.json", taskRunId)

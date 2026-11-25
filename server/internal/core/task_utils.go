@@ -71,7 +71,8 @@ func (e *DaemonCore) startQuantumWorker(
 		e.stopWorkerRun(ctx, workerRun)
 
 		return nil, fmt.Errorf(
-			"failed to start worker for input format %w",
+			"failed to start worker %s for input format %w",
+			workerHash,
 			err,
 		)
 	}
@@ -125,13 +126,6 @@ func (e *DaemonCore) startWorker(
 	if err != nil {
 		return "", "", fmt.Errorf(
 			"failed to create worker image: %w",
-			err,
-		)
-	}
-
-	if err != nil {
-		return "", "", fmt.Errorf(
-			"failed to get available TCP port: %w",
 			err,
 		)
 	}
