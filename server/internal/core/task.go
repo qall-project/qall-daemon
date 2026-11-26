@@ -88,8 +88,8 @@ func (e *DaemonCore) RunTask(
 	if workerHash != "" {
 		workerRun, err = e.startQuantumWorker(
 			ctx,
-			workerHash,
 			taskRun.Id,
+			workerHash,
 			envVariables,
 			providerName,
 		)
